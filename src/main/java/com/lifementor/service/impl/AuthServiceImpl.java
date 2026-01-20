@@ -6,6 +6,7 @@ import com.lifementor.entity.User;
 import com.lifementor.exception.*;
 import com.lifementor.repository.UserRepository;
 import com.lifementor.service.AuthService;
+import com.lifementor.service.EmailService;
 import com.lifementor.service.PasswordService;
 import com.lifementor.service.TokenService;
 import org.slf4j.Logger;
@@ -25,11 +26,14 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordService passwordService;
     private final TokenService tokenService;
+    private final EmailService emailService;
 
-    public AuthServiceImpl(UserRepository userRepository, PasswordService passwordService, TokenService tokenService) {
+    public AuthServiceImpl(UserRepository userRepository, PasswordService passwordService,
+                           TokenService tokenService, EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.tokenService = tokenService;
+        this.emailService = emailService;
     }
 
     @Override
@@ -62,10 +66,97 @@ public class AuthServiceImpl implements AuthService {
         user = userRepository.save(user);
         log.info("User registered successfully: {}", user.getEmail());
 
+        // Send welcome email
+        try {
+            emailService.sendWelcomeEmail(user.getEmail(), user.getName());
+        } catch (Exception e) {
+            log.warn("Failed to send welcome email to {}: {}", user.getEmail(), e.getMessage());
+            // Continue even if email fails
+        }
+
         // Generate token
         String token = tokenService.generateToken(user);
 
         return buildAuthResponse(token, user, "Registration successful");
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
+        if (userOptional.isEmpty()) {
+            // For security, don't reveal if user exists
+            log.info("Password reset requested for email (not found in system): {}", request.getEmail());
+            return;
+        }
+
+        User user = userOptional.get();
+
+        // Generate reset token
+        String resetToken = tokenService.generateResetToken();
+        user.setResetToken(resetToken);
+        user.setResetTokenExpiry(LocalDateTime.now().plusHours(1));
+
+        userRepository.save(user);
+
+        log.info("Password reset token generated for user: {}", user.getEmail());
+
+        // Send password reset email
+        try {
+            emailService.sendResetPasswordEmail(user.getEmail(), user.getName(), resetToken);
+            log.info("Password reset email sent to: {}", user.getEmail());
+        } catch (Exception e) {
+            log.error("Failed to send password reset email to {}: {}", user.getEmail(), e.getMessage());
+            throw new RuntimeException("Failed to send password reset email. Please try again later.");
+        }
+    }
+
+    @Override
+    public AuthResponse resetPassword(ResetPasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new ValidationException("Passwords do not match");
+        }
+
+        Optional<User> userOptional = userRepository.findByResetToken(request.getToken());
+        if (userOptional.isEmpty()) {
+            throw new InvalidTokenException("Invalid or expired reset token");
+        }
+
+        User user = userOptional.get();
+
+        // Check if token is expired
+        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            user.setResetToken(null);
+            user.setResetTokenExpiry(null);
+            userRepository.save(user);
+            throw new InvalidTokenException("Reset token has expired");
+        }
+
+        // Validate new password strength
+        if (!passwordService.validatePasswordStrength(request.getNewPassword())) {
+            throw new ValidationException("Password does not meet security requirements");
+        }
+
+        // Update password
+        user.setPassword(passwordService.hashPassword(request.getNewPassword()));
+        user.setResetToken(null);
+        user.setResetTokenExpiry(null);
+        user.resetFailedLoginAttempts(); // Reset lock if any
+
+        user = userRepository.save(user);
+
+        // Send password changed notification email
+        try {
+            emailService.sendPasswordChangedEmail(user.getEmail(), user.getName());
+        } catch (Exception e) {
+            log.warn("Failed to send password changed email to {}: {}", user.getEmail(), e.getMessage());
+            // Continue even if email fails
+        }
+
+        // Generate new login token
+        String token = tokenService.generateToken(user);
+        log.info("Password reset successful for user: {}", user.getEmail());
+
+        return buildAuthResponse(token, user, "Password reset successful");
     }
 
     @Override
@@ -103,78 +194,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(String token) {
-        // In a stateless JWT system, logout is handled client-side
         log.info("User logged out");
     }
 
     @Override
-    public void forgotPassword(ForgotPasswordRequest request) {
-        Optional<User> userOptional = userRepository.findByEmail(request.getEmail());
-        if (userOptional.isEmpty()) {
-            // For security, don't reveal if user exists
-            log.info("Password reset requested for non-existent email: {}", request.getEmail());
-            return;
-        }
-
-        User user = userOptional.get();
-
-        // Generate reset token
-        String resetToken = tokenService.generateResetToken();
-        user.setResetToken(resetToken);
-        user.setResetTokenExpiry(LocalDateTime.now().plusHours(1)); // Token valid for 1 hour
-
-        userRepository.save(user);
-
-        // In production, send email with reset link
-        log.info("Password reset token generated for user: {}. Token: {}", user.getEmail(), resetToken);
-        // TODO: Implement email service to send reset link
-    }
-
-    @Override
-    public AuthResponse resetPassword(ResetPasswordRequest request) {
-        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new ValidationException("Passwords do not match");
-        }
-
-        Optional<User> userOptional = userRepository.findByResetToken(request.getToken());
-        if (userOptional.isEmpty()) {
-            throw new InvalidTokenException("Invalid or expired reset token");
-        }
-
-        User user = userOptional.get();
-
-        // Check if token is expired
-        if (user.getResetTokenExpiry() == null || user.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
-            user.setResetToken(null);
-            user.setResetTokenExpiry(null);
-            userRepository.save(user);
-            throw new InvalidTokenException("Reset token has expired");
-        }
-
-        // Validate new password strength
-        if (!passwordService.validatePasswordStrength(request.getNewPassword())) {
-            throw new ValidationException("Password does not meet security requirements");
-        }
-
-        // Update password
-        user.setPassword(passwordService.hashPassword(request.getNewPassword()));
-        user.setResetToken(null);
-        user.setResetTokenExpiry(null);
-        user.resetFailedLoginAttempts(); // Reset lock if any
-
-        user = userRepository.save(user);
-
-        // Generate new login token
-        String token = tokenService.generateToken(user);
-        log.info("Password reset successful for user: {}", user.getEmail());
-
-        return buildAuthResponse(token, user, "Password reset successful");
-    }
-
-    @Override
     public User getCurrentUser() {
-        // Implementation depends on security context
-        // This should be implemented with Spring Security
         throw new UnsupportedOperationException("To be implemented with Spring Security");
     }
 
