@@ -28,7 +28,27 @@ public class JwtTokenServiceImpl implements TokenService {
     private Long resetTokenExpirationMs;
 
     private SecretKey getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+        // Ensure we have at least 64 bytes (512 bits) for HS512 algorithm
+        byte[] keyBytes = jwtSecret.getBytes(StandardCharsets.UTF_8);
+
+        // Check if key is long enough
+        if (keyBytes.length < 64) {
+            log.warn("JWT secret is only {} bytes ({} bits). Creating 512-bit key by repeating the secret.",
+                    keyBytes.length, keyBytes.length * 8);
+
+            // Create a 64-byte (512-bit) array
+            byte[] secureKey = new byte[64];
+
+            // Fill the array by repeating the secret
+            for (int i = 0; i < 64; i++) {
+                secureKey[i] = keyBytes[i % keyBytes.length];
+            }
+
+            return Keys.hmacShaKeyFor(secureKey);
+        }
+
+        // If key is already 64+ bytes, use it directly
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     @Override
