@@ -5,10 +5,7 @@ import com.lifementor.dto.response.AuthResponse;
 import com.lifementor.entity.User;
 import com.lifementor.exception.*;
 import com.lifementor.repository.UserRepository;
-import com.lifementor.service.AuthService;
-import com.lifementor.service.EmailService;
-import com.lifementor.service.PasswordService;
-import com.lifementor.service.TokenService;
+import com.lifementor.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -27,13 +24,15 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordService passwordService;
     private final TokenService tokenService;
     private final EmailService emailService;
+    private final ProfileService profileService;
 
     public AuthServiceImpl(UserRepository userRepository, PasswordService passwordService,
-                           TokenService tokenService, EmailService emailService) {
+                           TokenService tokenService, EmailService emailService, ProfileService profileService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.tokenService = tokenService;
         this.emailService = emailService;
+        this.profileService = profileService;
     }
 
     @Override
