@@ -17,6 +17,7 @@ public class ProfileResponse {
     private LocalDateTime updatedAt;
     private LocalDateTime lastLogin;
 
+
     // Constructors
     public ProfileResponse() {}
 

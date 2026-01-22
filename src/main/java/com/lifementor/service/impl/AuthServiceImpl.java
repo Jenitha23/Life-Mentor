@@ -26,6 +26,7 @@ public class AuthServiceImpl implements AuthService {
     private final EmailService emailService;
     private final ProfileService profileService;
 
+
     public AuthServiceImpl(UserRepository userRepository, PasswordService passwordService,
                            TokenService tokenService, EmailService emailService, ProfileService profileService) {
         this.userRepository = userRepository;
