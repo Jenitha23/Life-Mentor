@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/entity/User.java
 package com.lifementor.entity;
 
 import jakarta.persistence.*;
@@ -7,6 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -17,40 +18,56 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @UuidGenerator
+    @Column(columnDefinition = "CHAR(36)")
     private UUID id;
 
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String name;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 255)
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Column(nullable = false)
+    @Column(nullable = false, length = 255)
     private String password;
 
-    @Column(name = "reset_token")
+    @Column(name = "reset_token", length = 255)
     private String resetToken;
 
     @Column(name = "reset_token_expiry")
     private LocalDateTime resetTokenExpiry;
 
-    @Column(name = "email_verified")
-    private boolean emailVerified;
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
 
-    @Column(name = "failed_login_attempts")
-    private int failedLoginAttempts;
+    @Column(name = "failed_login_attempts", nullable = false)
+    private int failedLoginAttempts = 0;
 
-    @Column(name = "account_locked")
-    private boolean accountLocked;
+    @Column(name = "account_locked", nullable = false)
+    private boolean accountLocked = false;
 
     @Column(name = "lock_until")
     private LocalDateTime lockUntil;
+
+    @Column(name = "phone_number", length = 20)
+    private String phoneNumber;
+
+    @Column(name = "bio", length = 500)
+    private String bio;
+
+    @Column(name = "date_of_birth")
+    private String dateOfBirth;
+
+    @Column(name = "gender", length = 20)
+    private String gender;
+
+    @Column(name = "profile_picture_url", length = 500)
+    private String profilePictureUrl;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -68,8 +85,9 @@ public class User {
 
     public User(UUID id, String name, String email, String password, String resetToken,
                 LocalDateTime resetTokenExpiry, boolean emailVerified, int failedLoginAttempts,
-                boolean accountLocked, LocalDateTime lockUntil, LocalDateTime createdAt,
-                LocalDateTime updatedAt, LocalDateTime lastLogin) {
+                boolean accountLocked, LocalDateTime lockUntil, String phoneNumber,
+                String bio, String dateOfBirth, String gender, String profilePictureUrl,
+                LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime lastLogin) {
         this.id = id;
         this.name = name;
         this.email = email;
@@ -80,6 +98,11 @@ public class User {
         this.failedLoginAttempts = failedLoginAttempts;
         this.accountLocked = accountLocked;
         this.lockUntil = lockUntil;
+        this.phoneNumber = phoneNumber;
+        this.bio = bio;
+        this.dateOfBirth = dateOfBirth;
+        this.gender = gender;
+        this.profilePictureUrl = profilePictureUrl;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.lastLogin = lastLogin;
@@ -166,6 +189,46 @@ public class User {
         this.lockUntil = lockUntil;
     }
 
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public String getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(String dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }
+
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
+    }
+
+    public void setProfilePictureUrl(String profilePictureUrl) {
+        this.profilePictureUrl = profilePictureUrl;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -231,6 +294,11 @@ public class User {
         private int failedLoginAttempts;
         private boolean accountLocked;
         private LocalDateTime lockUntil;
+        private String phoneNumber;
+        private String bio;
+        private String dateOfBirth;
+        private String gender;
+        private String profilePictureUrl;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime lastLogin;
@@ -285,6 +353,31 @@ public class User {
             return this;
         }
 
+        public Builder phoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public Builder bio(String bio) {
+            this.bio = bio;
+            return this;
+        }
+
+        public Builder dateOfBirth(String dateOfBirth) {
+            this.dateOfBirth = dateOfBirth;
+            return this;
+        }
+
+        public Builder gender(String gender) {
+            this.gender = gender;
+            return this;
+        }
+
+        public Builder profilePictureUrl(String profilePictureUrl) {
+            this.profilePictureUrl = profilePictureUrl;
+            return this;
+        }
+
         public Builder createdAt(LocalDateTime createdAt) {
             this.createdAt = createdAt;
             return this;
@@ -303,6 +396,7 @@ public class User {
         public User build() {
             return new User(id, name, email, password, resetToken, resetTokenExpiry,
                     emailVerified, failedLoginAttempts, accountLocked, lockUntil,
+                    phoneNumber, bio, dateOfBirth, gender, profilePictureUrl,
                     createdAt, updatedAt, lastLogin);
         }
     }
