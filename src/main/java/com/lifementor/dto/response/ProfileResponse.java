@@ -13,17 +13,19 @@ public class ProfileResponse {
     private String gender;
     private String profilePictureUrl;
     private boolean emailVerified;
+    private boolean hasAssessment; // NEW FIELD ADDED
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private LocalDateTime lastLogin;
 
-
-    // Constructors
+    // Default Constructor
     public ProfileResponse() {}
 
+    // Updated Constructor with hasAssessment parameter
     public ProfileResponse(String id, String name, String email, String phoneNumber,
                            String bio, String dateOfBirth, String gender,
                            String profilePictureUrl, boolean emailVerified,
+                           boolean hasAssessment, // NEW PARAMETER
                            LocalDateTime createdAt, LocalDateTime updatedAt,
                            LocalDateTime lastLogin) {
         this.id = id;
@@ -35,6 +37,7 @@ public class ProfileResponse {
         this.gender = gender;
         this.profilePictureUrl = profilePictureUrl;
         this.emailVerified = emailVerified;
+        this.hasAssessment = hasAssessment; // INITIALIZE NEW FIELD
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.lastLogin = lastLogin;
@@ -113,6 +116,15 @@ public class ProfileResponse {
         this.emailVerified = emailVerified;
     }
 
+    // NEW GETTER AND SETTER FOR hasAssessment
+    public boolean isHasAssessment() {
+        return hasAssessment;
+    }
+
+    public void setHasAssessment(boolean hasAssessment) {
+        this.hasAssessment = hasAssessment;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -152,6 +164,7 @@ public class ProfileResponse {
         private String gender;
         private String profilePictureUrl;
         private boolean emailVerified;
+        private boolean hasAssessment; // NEW FIELD IN BUILDER
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
         private LocalDateTime lastLogin;
@@ -201,6 +214,12 @@ public class ProfileResponse {
             return this;
         }
 
+        // NEW BUILDER METHOD FOR hasAssessment
+        public Builder hasAssessment(boolean hasAssessment) {
+            this.hasAssessment = hasAssessment;
+            return this;
+        }
+
         public Builder createdAt(LocalDateTime createdAt) {
             this.createdAt = createdAt;
             return this;
@@ -218,7 +237,7 @@ public class ProfileResponse {
 
         public ProfileResponse build() {
             return new ProfileResponse(id, name, email, phoneNumber, bio, dateOfBirth,
-                    gender, profilePictureUrl, emailVerified,
+                    gender, profilePictureUrl, emailVerified, hasAssessment, // UPDATED
                     createdAt, updatedAt, lastLogin);
         }
     }

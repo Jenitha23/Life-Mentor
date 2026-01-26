@@ -9,6 +9,7 @@ import com.lifementor.exception.ResourceNotFoundException;
 import com.lifementor.exception.ValidationException;
 import com.lifementor.repository.UserRepository;
 import com.lifementor.service.EmailService;
+import com.lifementor.service.LifestyleAssessmentService;
 import com.lifementor.service.PasswordService;
 import com.lifementor.service.ProfileService;
 import org.slf4j.Logger;
@@ -35,6 +36,7 @@ public class ProfileServiceImpl implements ProfileService {
     private final UserRepository userRepository;
     private final PasswordService passwordService;
     private final EmailService emailService;
+    private final LifestyleAssessmentService assessmentService; // ADDED
 
     @Value("${app.upload.profile-pictures-dir:uploads/profile-pictures}")
     private String uploadDir;
@@ -45,16 +47,19 @@ public class ProfileServiceImpl implements ProfileService {
     @Value("${app.static-files.path:/files}")
     private String staticFilesPath;
 
+    // UPDATED CONSTRUCTOR
     public ProfileServiceImpl(UserRepository userRepository, PasswordService passwordService,
-                              EmailService emailService) {
+                              EmailService emailService, LifestyleAssessmentService assessmentService) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.emailService = emailService;
+        this.assessmentService = assessmentService; // ADDED
     }
 
     @Override
     public ProfileResponse getProfile(UUID userId) {
         User user = getUserById(userId);
+        // UPDATED: Include assessment status in response
         return mapToProfileResponse(user);
     }
 
@@ -99,6 +104,7 @@ public class ProfileServiceImpl implements ProfileService {
         user = userRepository.save(user);
         log.info("Profile updated for user: {}", userId);
 
+        // UPDATED: Include assessment status in response
         return mapToProfileResponse(user);
     }
 
@@ -222,15 +228,15 @@ public class ProfileServiceImpl implements ProfileService {
     public ProfileResponse deactivateAccount(UUID userId) {
         User user = getUserById(userId);
         log.info("Account deactivation requested for user: {}", userId);
+        // UPDATED: Include assessment status in response
         return mapToProfileResponse(user);
     }
 
-    private User getUserById(UUID userId) {
-        return userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-    }
-
+    // UPDATED METHOD: Now includes assessment status
     private ProfileResponse mapToProfileResponse(User user) {
+        // Check if user has assessment
+        boolean hasAssessment = assessmentService.hasAssessment(user.getId());
+
         return ProfileResponse.builder()
                 .id(user.getId().toString())
                 .name(user.getName())
@@ -241,10 +247,16 @@ public class ProfileServiceImpl implements ProfileService {
                 .gender(user.getGender())
                 .profilePictureUrl(user.getProfilePictureUrl())
                 .emailVerified(user.isEmailVerified())
+                .hasAssessment(hasAssessment) // NEW FIELD - Need to update ProfileResponse.java
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
                 .lastLogin(user.getLastLogin())
                 .build();
+    }
+
+    private User getUserById(UUID userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
     }
 
     private void deleteOldProfilePicture(String profilePictureUrl) {

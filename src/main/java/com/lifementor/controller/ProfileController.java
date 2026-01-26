@@ -5,6 +5,7 @@ import com.lifementor.dto.request.ProfileUpdateRequest;
 import com.lifementor.dto.response.ApiResponse;
 import com.lifementor.dto.response.ProfileResponse;
 import com.lifementor.service.ProfileService;
+import com.lifementor.service.LifestyleAssessmentService;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -23,9 +26,13 @@ public class ProfileController {
     private static final Logger log = LoggerFactory.getLogger(ProfileController.class);
 
     private final ProfileService profileService;
+    private final LifestyleAssessmentService assessmentService; // ADDED
 
-    public ProfileController(ProfileService profileService) {
+    // UPDATED CONSTRUCTOR
+    public ProfileController(ProfileService profileService,
+                             LifestyleAssessmentService assessmentService) {
         this.profileService = profileService;
+        this.assessmentService = assessmentService; // ADDED
     }
 
     @GetMapping
@@ -127,6 +134,32 @@ public class ProfileController {
             return ResponseEntity
                     .status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(ApiResponse.error("Failed to deactivate account"));
+        }
+    }
+
+    // NEW ENDPOINT ADDED
+    @GetMapping("/assessment-status")
+    public ResponseEntity<ApiResponse> checkAssessmentStatus(
+            @RequestAttribute("userId") UUID userId) {
+        try {
+            boolean hasAssessment = assessmentService.hasAssessment(userId);
+
+            // Create response data
+            Map<String, Object> responseData = new HashMap<>();
+            responseData.put("hasAssessment", hasAssessment);
+            responseData.put("userId", userId.toString());
+
+            String message = hasAssessment
+                    ? "Assessment exists for user"
+                    : "No assessment found for user";
+
+            return ResponseEntity.ok(ApiResponse.success(message, responseData));
+
+        } catch (Exception e) {
+            log.error("Failed to check assessment status: {}", e.getMessage());
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to check assessment status"));
         }
     }
 }

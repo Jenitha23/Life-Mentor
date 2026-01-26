@@ -6,6 +6,7 @@ import com.lifementor.dto.response.LifestyleAssessmentResponse;
 import com.lifementor.entity.LifestyleAssessment;
 import com.lifementor.entity.User;
 import com.lifementor.exception.ResourceNotFoundException;
+import com.lifementor.exception.UnauthorizedAccessException;
 import com.lifementor.exception.ValidationException;
 import com.lifementor.repository.LifestyleAssessmentRepository;
 import com.lifementor.repository.UserRepository;
@@ -165,6 +166,17 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
 
     @Override
     public boolean hasAssessment(UUID userId) {
+        // ADDED SECURITY CHECK: Verify the requesting user matches the userId
+        User authenticatedUser = getAuthenticatedUser();
+
+        // Check if the authenticated user is requesting their own assessment status
+        if (!authenticatedUser.getId().equals(userId)) {
+            log.warn("Unauthorized attempt to check assessment status. Authenticated user: {}, Requested user: {}",
+                    authenticatedUser.getId(), userId);
+            throw new UnauthorizedAccessException("Not authorized to check assessment status for this user");
+        }
+
+        log.debug("Checking assessment status for user: {}", userId);
         return assessmentRepository.existsByUserId(userId);
     }
 
@@ -233,11 +245,6 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
             if (sleepDuration > 12) {
                 throw new ValidationException("Sleep duration should not exceed 12 hours");
             }
-
-            // REMOVED THE CONFUSING CHECK:
-            // if (sleepTime.isAfter(wakeUpTime) || sleepTime.equals(wakeUpTime)) {
-            //     throw new ValidationException("Sleep time must be before wake up time");
-            // }
         }
     }
 

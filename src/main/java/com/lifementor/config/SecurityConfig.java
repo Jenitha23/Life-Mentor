@@ -61,7 +61,8 @@ public class SecurityConfig {
                                 "/error",
                                 "/files/**"  // Allow access to static files
                         ).permitAll()
-                        .requestMatchers("/api/profile/**").authenticated()  // Profile endpoints require auth
+                        .requestMatchers("/api/profile/**").authenticated()
+                        .requestMatchers("/api/lifestyle-assessment/**").authenticated()
                         .anyRequest().authenticated()
                 )
 
