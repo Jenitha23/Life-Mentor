@@ -20,14 +20,17 @@ public class LifestyleAssessmentResponse {
     private String mentalWellbeingNote;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private boolean hasAIFeedback; // NEW FIELD ADDED
 
     // Constructors
     public LifestyleAssessmentResponse() {}
 
+    // UPDATED CONSTRUCTOR WITH hasAIFeedback PARAMETER
     public LifestyleAssessmentResponse(UUID id, UUID userId, LocalTime sleepTime, LocalTime wakeUpTime,
                                        Integer mealsPerDay, LifestyleAssessment.ExerciseFrequency exerciseFrequency,
                                        BigDecimal studyWorkHours, BigDecimal screenTimeHours, Integer moodLevel,
-                                       String mentalWellbeingNote, LocalDateTime createdAt, LocalDateTime updatedAt) {
+                                       String mentalWellbeingNote, LocalDateTime createdAt, LocalDateTime updatedAt,
+                                       boolean hasAIFeedback) { // NEW PARAMETER
         this.id = id;
         this.userId = userId;
         this.sleepTime = sleepTime;
@@ -40,6 +43,7 @@ public class LifestyleAssessmentResponse {
         this.mentalWellbeingNote = mentalWellbeingNote;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
+        this.hasAIFeedback = hasAIFeedback; // INITIALIZE NEW FIELD
     }
 
     // Getters and Setters
@@ -139,6 +143,15 @@ public class LifestyleAssessmentResponse {
         this.updatedAt = updatedAt;
     }
 
+    // NEW GETTER AND SETTER FOR hasAIFeedback
+    public boolean isHasAIFeedback() {
+        return hasAIFeedback;
+    }
+
+    public void setHasAIFeedback(boolean hasAIFeedback) {
+        this.hasAIFeedback = hasAIFeedback;
+    }
+
     // Builder
     public static Builder builder() {
         return new Builder();
@@ -157,6 +170,7 @@ public class LifestyleAssessmentResponse {
         private String mentalWellbeingNote;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
+        private boolean hasAIFeedback; // NEW FIELD IN BUILDER
 
         public Builder id(UUID id) {
             this.id = id;
@@ -218,10 +232,17 @@ public class LifestyleAssessmentResponse {
             return this;
         }
 
+        // NEW BUILDER METHOD FOR hasAIFeedback
+        public Builder hasAIFeedback(boolean hasAIFeedback) {
+            this.hasAIFeedback = hasAIFeedback;
+            return this;
+        }
+
+        // UPDATED BUILD METHOD
         public LifestyleAssessmentResponse build() {
             return new LifestyleAssessmentResponse(id, userId, sleepTime, wakeUpTime, mealsPerDay,
                     exerciseFrequency, studyWorkHours, screenTimeHours, moodLevel,
-                    mentalWellbeingNote, createdAt, updatedAt);
+                    mentalWellbeingNote, createdAt, updatedAt, hasAIFeedback);
         }
     }
 }

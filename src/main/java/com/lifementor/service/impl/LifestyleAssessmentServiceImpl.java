@@ -10,9 +10,11 @@ import com.lifementor.exception.UnauthorizedAccessException;
 import com.lifementor.exception.ValidationException;
 import com.lifementor.repository.LifestyleAssessmentRepository;
 import com.lifementor.repository.UserRepository;
+import com.lifementor.service.AIService;
 import com.lifementor.service.LifestyleAssessmentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -31,11 +33,23 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
 
     private final LifestyleAssessmentRepository assessmentRepository;
     private final UserRepository userRepository;
+    private final AIService aiService;
 
+    // Add better logging for AIService initialization
+    @Autowired
     public LifestyleAssessmentServiceImpl(LifestyleAssessmentRepository assessmentRepository,
-                                          UserRepository userRepository) {
+                                          UserRepository userRepository,
+                                          AIService aiService) {
         this.assessmentRepository = assessmentRepository;
         this.userRepository = userRepository;
+        this.aiService = aiService;
+
+        // Log AIService status
+        if (this.aiService != null) {
+            log.info("✓ AIService successfully initialized for LifestyleAssessmentService");
+        } else {
+            log.warn("⚠ AIService is NULL in LifestyleAssessmentService - AI feedback will not be generated");
+        }
     }
 
     @Override
@@ -45,18 +59,20 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
         // Check if assessment already exists for this user
         Optional<LifestyleAssessment> existingAssessment = assessmentRepository.findByUserId(user.getId());
 
+        LifestyleAssessment assessment;
+        boolean isNew = false;
+
         if (existingAssessment.isPresent()) {
             // Update existing assessment
-            LifestyleAssessment assessment = existingAssessment.get();
+            assessment = existingAssessment.get();
             updateAssessmentFromRequest(assessment, request);
             assessment = assessmentRepository.save(assessment);
             log.info("Updated lifestyle assessment for user: {}", user.getId());
-            return mapToResponse(assessment);
         } else {
             // Create new assessment
             validateAssessmentRequest(request);
 
-            LifestyleAssessment assessment = LifestyleAssessment.builder()
+            assessment = LifestyleAssessment.builder()
                     .user(user)
                     .sleepTime(request.getSleepTime())
                     .wakeUpTime(request.getWakeUpTime())
@@ -69,9 +85,41 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
                     .build();
 
             assessment = assessmentRepository.save(assessment);
-            log.info("Created lifestyle assessment for user: {}", user.getId());
-            return mapToResponse(assessment);
+            isNew = true;
+            log.info("Created new lifestyle assessment for user: {} with ID: {}",
+                    user.getId(), assessment.getId());
         }
+
+        // Generate AI feedback for new assessments
+        if (isNew && aiService != null) {
+            try {
+                log.info("Starting AI feedback generation for assessment: {}", assessment.getId());
+
+                // IMPORTANT: Flush the assessment to ensure it's committed to database
+                assessmentRepository.flush();
+
+                // Small delay to ensure transaction is complete
+                Thread.sleep(100);
+
+                // Generate AI feedback
+                aiService.generateFeedback(assessment);
+                log.info("✓ AI feedback generation initiated successfully for assessment: {}",
+                        assessment.getId());
+
+            } catch (InterruptedException e) {
+                log.warn("Thread interrupted during AI feedback generation: {}", e.getMessage());
+                Thread.currentThread().interrupt();
+            } catch (Exception e) {
+                log.error("❌ Failed to generate AI feedback for assessment {}: {}",
+                        assessment.getId(), e.getMessage());
+                log.error("Stack trace:", e);
+                // Continue without throwing - assessment creation should still succeed
+            }
+        } else if (isNew) {
+            log.warn("⚠ AIService is not available. Skipping AI feedback generation for new assessment.");
+        }
+
+        return mapToResponse(assessment);
     }
 
     @Override
@@ -81,6 +129,7 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
         LifestyleAssessment assessment = assessmentRepository.findByUserId(user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Lifestyle assessment not found"));
 
+        log.debug("Retrieved assessment for user: {}, assessment ID: {}", user.getId(), assessment.getId());
         return mapToResponse(assessment);
     }
 
@@ -166,7 +215,7 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
 
     @Override
     public boolean hasAssessment(UUID userId) {
-        // ADDED SECURITY CHECK: Verify the requesting user matches the userId
+        // Verify the requesting user matches the userId
         User authenticatedUser = getAuthenticatedUser();
 
         // Check if the authenticated user is requesting their own assessment status
@@ -184,8 +233,9 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
 
+        log.debug("Getting authenticated user with email: {}", userEmail);
         return userRepository.findByEmail(userEmail)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + userEmail));
     }
 
     private void validateAssessmentRequest(LifestyleAssessmentRequest request) {
@@ -260,6 +310,16 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
     }
 
     private LifestyleAssessmentResponse mapToResponse(LifestyleAssessment assessment) {
+        // For now, set hasAIFeedback to false - this will be updated when we integrate
+        // the actual check from AIFeedbackRepository
+        boolean hasAIFeedback = false;
+
+        // Note: In a production implementation, you would inject AIFeedbackRepository
+        // and check: boolean hasAIFeedback = aiFeedbackRepository.existsByAssessmentId(assessment.getId());
+
+        log.debug("Mapping assessment to response. Assessment ID: {}, User ID: {}, hasAIFeedback: {}",
+                assessment.getId(), assessment.getUser().getId(), hasAIFeedback);
+
         return LifestyleAssessmentResponse.builder()
                 .id(assessment.getId())
                 .userId(assessment.getUser().getId())
@@ -273,6 +333,7 @@ public class LifestyleAssessmentServiceImpl implements LifestyleAssessmentServic
                 .mentalWellbeingNote(assessment.getMentalWellbeingNote())
                 .createdAt(assessment.getCreatedAt())
                 .updatedAt(assessment.getUpdatedAt())
+                .hasAIFeedback(hasAIFeedback)
                 .build();
     }
 }
