@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/service/impl/EmailServiceImpl.java
 package com.lifementor.service.impl;
 
 import com.lifementor.service.EmailService;

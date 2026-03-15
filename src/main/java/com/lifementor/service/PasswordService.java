@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/service/PasswordService.java
 package com.lifementor.service;
 
 public interface PasswordService {

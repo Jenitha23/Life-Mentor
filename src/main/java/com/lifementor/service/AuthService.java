@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/service/AuthService.java
 package com.lifementor.service;
 
 import com.lifementor.dto.request.*;

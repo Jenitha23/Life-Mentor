@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/config/AsyncConfig.java
 package com.lifementor.config;
 
 import org.springframework.context.annotation.Configuration;

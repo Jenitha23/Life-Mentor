@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/LifeMentorApplication.java
 package com.lifementor;
 
 import org.springframework.boot.SpringApplication;

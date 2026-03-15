@@ -9,6 +9,8 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -18,8 +20,8 @@ import java.util.UUID;
 public class User {
 
     @Id
-    @UuidGenerator
-    @Column(columnDefinition = "CHAR(36)")
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "BINARY(16)")
     private UUID id;
 
     @NotBlank(message = "Name is required")
@@ -80,178 +82,95 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
+    // Relationships
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    private LifestyleAssessment lifestyleAssessment;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<AIChatConversation> chatConversations = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DailyCheckinResponseEntity> checkinResponses = new ArrayList<>(); // FIXED: Changed to DailyCheckinResponseEntity
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<UserGoal> goals = new ArrayList<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<WellbeingAlert> wellbeingAlerts = new ArrayList<>();
+
     // Constructors
     public User() {}
 
-    public User(UUID id, String name, String email, String password, String resetToken,
-                LocalDateTime resetTokenExpiry, boolean emailVerified, int failedLoginAttempts,
-                boolean accountLocked, LocalDateTime lockUntil, String phoneNumber,
-                String bio, String dateOfBirth, String gender, String profilePictureUrl,
-                LocalDateTime createdAt, LocalDateTime updatedAt, LocalDateTime lastLogin) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.password = password;
-        this.resetToken = resetToken;
-        this.resetTokenExpiry = resetTokenExpiry;
-        this.emailVerified = emailVerified;
-        this.failedLoginAttempts = failedLoginAttempts;
-        this.accountLocked = accountLocked;
-        this.lockUntil = lockUntil;
-        this.phoneNumber = phoneNumber;
-        this.bio = bio;
-        this.dateOfBirth = dateOfBirth;
-        this.gender = gender;
-        this.profilePictureUrl = profilePictureUrl;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-        this.lastLogin = lastLogin;
-    }
-
     // Getters and Setters
-    public UUID getId() {
-        return id;
-    }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
 
-    public String getName() {
-        return name;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setName(String name) {
-        this.name = name;
-    }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getResetToken() { return resetToken; }
+    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
+    public LocalDateTime getResetTokenExpiry() { return resetTokenExpiry; }
+    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) { this.resetTokenExpiry = resetTokenExpiry; }
 
-    public String getPassword() {
-        return password;
-    }
+    public boolean isEmailVerified() { return emailVerified; }
+    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    public int getFailedLoginAttempts() { return failedLoginAttempts; }
+    public void setFailedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; }
 
-    public String getResetToken() {
-        return resetToken;
-    }
+    public boolean isAccountLocked() { return accountLocked; }
+    public void setAccountLocked(boolean accountLocked) { this.accountLocked = accountLocked; }
 
-    public void setResetToken(String resetToken) {
-        this.resetToken = resetToken;
-    }
+    public LocalDateTime getLockUntil() { return lockUntil; }
+    public void setLockUntil(LocalDateTime lockUntil) { this.lockUntil = lockUntil; }
 
-    public LocalDateTime getResetTokenExpiry() {
-        return resetTokenExpiry;
-    }
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
-    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) {
-        this.resetTokenExpiry = resetTokenExpiry;
-    }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
 
-    public boolean isEmailVerified() {
-        return emailVerified;
-    }
+    public String getDateOfBirth() { return dateOfBirth; }
+    public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
 
-    public void setEmailVerified(boolean emailVerified) {
-        this.emailVerified = emailVerified;
-    }
+    public String getGender() { return gender; }
+    public void setGender(String gender) { this.gender = gender; }
 
-    public int getFailedLoginAttempts() {
-        return failedLoginAttempts;
-    }
+    public String getProfilePictureUrl() { return profilePictureUrl; }
+    public void setProfilePictureUrl(String profilePictureUrl) { this.profilePictureUrl = profilePictureUrl; }
 
-    public void setFailedLoginAttempts(int failedLoginAttempts) {
-        this.failedLoginAttempts = failedLoginAttempts;
-    }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
-    public boolean isAccountLocked() {
-        return accountLocked;
-    }
+    public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
 
-    public void setAccountLocked(boolean accountLocked) {
-        this.accountLocked = accountLocked;
-    }
+    public LocalDateTime getLastLogin() { return lastLogin; }
+    public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
 
-    public LocalDateTime getLockUntil() {
-        return lockUntil;
-    }
+    public LifestyleAssessment getLifestyleAssessment() { return lifestyleAssessment; }
+    public void setLifestyleAssessment(LifestyleAssessment lifestyleAssessment) { this.lifestyleAssessment = lifestyleAssessment; }
 
-    public void setLockUntil(LocalDateTime lockUntil) {
-        this.lockUntil = lockUntil;
-    }
+    public List<AIChatConversation> getChatConversations() { return chatConversations; }
+    public void setChatConversations(List<AIChatConversation> chatConversations) { this.chatConversations = chatConversations; }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
+    // FIXED: Changed return type to List<DailyCheckinResponseEntity>
+    public List<DailyCheckinResponseEntity> getCheckinResponses() { return checkinResponses; }
+    public void setCheckinResponses(List<DailyCheckinResponseEntity> checkinResponses) { this.checkinResponses = checkinResponses; }
 
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
+    public List<UserGoal> getGoals() { return goals; }
+    public void setGoals(List<UserGoal> goals) { this.goals = goals; }
 
-    public String getBio() {
-        return bio;
-    }
-
-    public void setBio(String bio) {
-        this.bio = bio;
-    }
-
-    public String getDateOfBirth() {
-        return dateOfBirth;
-    }
-
-    public void setDateOfBirth(String dateOfBirth) {
-        this.dateOfBirth = dateOfBirth;
-    }
-
-    public String getGender() {
-        return gender;
-    }
-
-    public void setGender(String gender) {
-        this.gender = gender;
-    }
-
-    public String getProfilePictureUrl() {
-        return profilePictureUrl;
-    }
-
-    public void setProfilePictureUrl(String profilePictureUrl) {
-        this.profilePictureUrl = profilePictureUrl;
-    }
-
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public LocalDateTime getLastLogin() {
-        return lastLogin;
-    }
-
-    public void setLastLogin(LocalDateTime lastLogin) {
-        this.lastLogin = lastLogin;
-    }
+    public List<WellbeingAlert> getWellbeingAlerts() { return wellbeingAlerts; }
+    public void setWellbeingAlerts(List<WellbeingAlert> wellbeingAlerts) { this.wellbeingAlerts = wellbeingAlerts; }
 
     // Business logic methods
     public void incrementFailedLoginAttempts() {
@@ -303,101 +222,46 @@ public class User {
         private LocalDateTime updatedAt;
         private LocalDateTime lastLogin;
 
-        public Builder id(UUID id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder name(String name) {
-            this.name = name;
-            return this;
-        }
-
-        public Builder email(String email) {
-            this.email = email;
-            return this;
-        }
-
-        public Builder password(String password) {
-            this.password = password;
-            return this;
-        }
-
-        public Builder resetToken(String resetToken) {
-            this.resetToken = resetToken;
-            return this;
-        }
-
-        public Builder resetTokenExpiry(LocalDateTime resetTokenExpiry) {
-            this.resetTokenExpiry = resetTokenExpiry;
-            return this;
-        }
-
-        public Builder emailVerified(boolean emailVerified) {
-            this.emailVerified = emailVerified;
-            return this;
-        }
-
-        public Builder failedLoginAttempts(int failedLoginAttempts) {
-            this.failedLoginAttempts = failedLoginAttempts;
-            return this;
-        }
-
-        public Builder accountLocked(boolean accountLocked) {
-            this.accountLocked = accountLocked;
-            return this;
-        }
-
-        public Builder lockUntil(LocalDateTime lockUntil) {
-            this.lockUntil = lockUntil;
-            return this;
-        }
-
-        public Builder phoneNumber(String phoneNumber) {
-            this.phoneNumber = phoneNumber;
-            return this;
-        }
-
-        public Builder bio(String bio) {
-            this.bio = bio;
-            return this;
-        }
-
-        public Builder dateOfBirth(String dateOfBirth) {
-            this.dateOfBirth = dateOfBirth;
-            return this;
-        }
-
-        public Builder gender(String gender) {
-            this.gender = gender;
-            return this;
-        }
-
-        public Builder profilePictureUrl(String profilePictureUrl) {
-            this.profilePictureUrl = profilePictureUrl;
-            return this;
-        }
-
-        public Builder createdAt(LocalDateTime createdAt) {
-            this.createdAt = createdAt;
-            return this;
-        }
-
-        public Builder updatedAt(LocalDateTime updatedAt) {
-            this.updatedAt = updatedAt;
-            return this;
-        }
-
-        public Builder lastLogin(LocalDateTime lastLogin) {
-            this.lastLogin = lastLogin;
-            return this;
-        }
+        public Builder id(UUID id) { this.id = id; return this; }
+        public Builder name(String name) { this.name = name; return this; }
+        public Builder email(String email) { this.email = email; return this; }
+        public Builder password(String password) { this.password = password; return this; }
+        public Builder resetToken(String resetToken) { this.resetToken = resetToken; return this; }
+        public Builder resetTokenExpiry(LocalDateTime resetTokenExpiry) { this.resetTokenExpiry = resetTokenExpiry; return this; }
+        public Builder emailVerified(boolean emailVerified) { this.emailVerified = emailVerified; return this; }
+        public Builder failedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; return this; }
+        public Builder accountLocked(boolean accountLocked) { this.accountLocked = accountLocked; return this; }
+        public Builder lockUntil(LocalDateTime lockUntil) { this.lockUntil = lockUntil; return this; }
+        public Builder phoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; return this; }
+        public Builder bio(String bio) { this.bio = bio; return this; }
+        public Builder dateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; return this; }
+        public Builder gender(String gender) { this.gender = gender; return this; }
+        public Builder profilePictureUrl(String profilePictureUrl) { this.profilePictureUrl = profilePictureUrl; return this; }
+        public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
+        public Builder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
+        public Builder lastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; return this; }
 
         public User build() {
-            return new User(id, name, email, password, resetToken, resetTokenExpiry,
-                    emailVerified, failedLoginAttempts, accountLocked, lockUntil,
-                    phoneNumber, bio, dateOfBirth, gender, profilePictureUrl,
-                    createdAt, updatedAt, lastLogin);
+            User user = new User();
+            user.id = this.id;
+            user.name = this.name;
+            user.email = this.email;
+            user.password = this.password;
+            user.resetToken = this.resetToken;
+            user.resetTokenExpiry = this.resetTokenExpiry;
+            user.emailVerified = this.emailVerified;
+            user.failedLoginAttempts = this.failedLoginAttempts;
+            user.accountLocked = this.accountLocked;
+            user.lockUntil = this.lockUntil;
+            user.phoneNumber = this.phoneNumber;
+            user.bio = this.bio;
+            user.dateOfBirth = this.dateOfBirth;
+            user.gender = this.gender;
+            user.profilePictureUrl = this.profilePictureUrl;
+            user.createdAt = this.createdAt;
+            user.updatedAt = this.updatedAt;
+            user.lastLogin = this.lastLogin;
+            return user;
         }
     }
 }
