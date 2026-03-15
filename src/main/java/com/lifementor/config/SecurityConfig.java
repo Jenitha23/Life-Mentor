@@ -56,17 +56,30 @@ public class SecurityConfig {
 
                 // Authorization rules
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints - explicitly list each auth endpoint
                         .requestMatchers(
-                                "/api/auth/**",
+                                "/api/auth/register",
+                                "/api/auth/login",
+                                "/api/auth/forgot-password",
+                                "/api/auth/reset-password",
+                                "/api/auth/validate-token",
                                 "/error",
-                                "/files/**"  // Allow access to static files
+                                "/files/**"
                         ).permitAll()
+                        // Protected endpoints - require authentication
+                        .requestMatchers("/api/auth/logout").authenticated()
                         .requestMatchers("/api/profile/**").authenticated()
                         .requestMatchers("/api/lifestyle-assessment/**").authenticated()
+                        .requestMatchers("/api/ai-feedback/**").authenticated()
+                        .requestMatchers("/api/ai-chat/**").authenticated()           
+                        .requestMatchers("/api/daily-checkin/**").authenticated()     
+                        .requestMatchers("/api/goals/**").authenticated()             
+                        .requestMatchers("/api/wellbeing/**").authenticated()         
+                        // Any other request requires authentication
                         .anyRequest().authenticated()
                 )
 
-                // Add JWT filter
+                // Add JWT filter - this will only check authenticated endpoints
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // Disable default login mechanisms
@@ -85,10 +98,11 @@ public class SecurityConfig {
         // IMPORTANT: Use allowedOriginPatterns instead of allowedOrigins
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS"
+                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
         ));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Authorization"));
 
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();

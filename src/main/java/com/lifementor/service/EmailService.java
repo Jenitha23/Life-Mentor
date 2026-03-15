@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/service/EmailService.java
 package com.lifementor.service;
 
 public interface EmailService {

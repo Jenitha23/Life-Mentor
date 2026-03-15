@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/dto/request/RegisterRequest.java
 package com.lifementor.dto.request;
 
 import jakarta.validation.constraints.Email;

@@ -16,7 +16,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
 
 @Component
@@ -27,10 +29,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final TokenService tokenService;
     private final HandlerExceptionResolver handlerExceptionResolver;
 
+    // List of public endpoints that don't need token validation
+    private final List<String> publicEndpoints = Arrays.asList(
+        "/api/auth/register",
+        "/api/auth/login",
+        "/api/auth/forgot-password",
+        "/api/auth/reset-password",
+        "/api/auth/validate-token",
+        "/error",
+        "/files"
+    );
+
     public JwtAuthenticationFilter(TokenService tokenService,
                                    HandlerExceptionResolver handlerExceptionResolver) {
         this.tokenService = tokenService;
         this.handlerExceptionResolver = handlerExceptionResolver;
+    }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        // Skip filter for public endpoints
+        return publicEndpoints.stream().anyMatch(path::startsWith);
     }
 
     @Override
@@ -64,12 +84,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     request.setAttribute("userEmail", email);
 
                     log.debug("User authenticated: {}", email);
+                } else {
+                    log.debug("Invalid token for request: {}", request.getRequestURI());
                 }
+            } else {
+                log.debug("No Bearer token found in request: {}", request.getRequestURI());
             }
 
             filterChain.doFilter(request, response);
+            
         } catch (Exception e) {
-            log.error("JWT authentication failed: {}", e.getMessage());
+            log.error("JWT authentication failed for request {}: {}", 
+                     request.getRequestURI(), e.getMessage());
             handlerExceptionResolver.resolveException(request, response, null, e);
         }
     }
