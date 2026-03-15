@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/dto/response/AuthResponse.java
 package com.lifementor.dto.response;
 
 public class AuthResponse {

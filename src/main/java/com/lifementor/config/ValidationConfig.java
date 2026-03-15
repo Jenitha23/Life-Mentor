@@ -1,4 +1,3 @@
-// src/main/java/com/lifementor/config/ValidationConfig.java
 package com.lifementor.config;
 
 import org.springframework.context.annotation.Bean;
