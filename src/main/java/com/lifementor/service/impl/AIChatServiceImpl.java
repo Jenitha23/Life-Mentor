@@ -1,6 +1,5 @@
 package com.lifementor.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lifementor.dto.request.AIChatRequest;
 import com.lifementor.dto.response.AIChatHistoryResponse;
 import com.lifementor.dto.response.AIChatResponse;
@@ -14,21 +13,18 @@ import com.lifementor.repository.AIChatConversationRepository;
 import com.lifementor.repository.AIChatMessageRepository;
 import com.lifementor.repository.UserRepository;
 import com.lifementor.service.AIChatService;
+import com.lifementor.service.GeminiClientService;
 import com.lifementor.util.AIPromptBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -41,35 +37,19 @@ public class AIChatServiceImpl implements AIChatService {
     private final AIChatConversationRepository conversationRepository;
     private final AIChatMessageRepository messageRepository;
     private final UserRepository userRepository;
-    private final RestTemplate restTemplate;
-    private final ObjectMapper objectMapper;
     private final AIPromptBuilder promptBuilder;
-
-    @Value("${app.ai.chat.api.url:}")
-    private String aiChatApiUrl;
-
-    @Value("${app.ai.chat.api.key:}")
-    private String aiChatApiKey;
-
-    @Value("${app.ai.chat.model:gpt-3.5-turbo}")
-    private String aiModel;
-
-    @Value("${app.ai.chat.max-tokens:500}")
-    private int maxTokens;
-
-    @Value("${app.ai.chat.temperature:0.7}")
-    private double temperature;
+    private final GeminiClientService geminiClientService;
 
     public AIChatServiceImpl(AIChatConversationRepository conversationRepository,
                              AIChatMessageRepository messageRepository,
                              UserRepository userRepository,
-                             AIPromptBuilder promptBuilder) {
+                             AIPromptBuilder promptBuilder,
+                             GeminiClientService geminiClientService) {
         this.conversationRepository = conversationRepository;
         this.messageRepository = messageRepository;
         this.userRepository = userRepository;
         this.promptBuilder = promptBuilder;
-        this.restTemplate = new RestTemplate();
-        this.objectMapper = new ObjectMapper();
+        this.geminiClientService = geminiClientService;
     }
 
     @Override
@@ -79,29 +59,28 @@ public class AIChatServiceImpl implements AIChatService {
         User user = getUserById(userId);
         AIChatConversation conversation = getOrCreateConversation(user, request);
 
-        // Save user message
-        AIChatMessage userMessage = new AIChatMessage(conversation, "USER", request.getMessage());
-        userMessage = messageRepository.save(userMessage);
+        messageRepository.save(new AIChatMessage(conversation, "USER", request.getMessage()));
 
-        // Generate AI response
-        String aiResponseText = generateAIResponse(conversation, request.getMessage());
-        int tokensUsed = estimateTokens(request.getMessage() + aiResponseText);
+        GeminiClientService.GeminiResponse geminiResponse =
+                generateAIResponse(conversation, request.getMessage());
+        String aiResponseText = geminiResponse.text();
+        int tokensUsed = geminiResponse.totalTokens() != null
+                ? geminiResponse.totalTokens()
+                : estimateTokens(request.getMessage() + aiResponseText);
 
-        // Save AI response
         AIChatMessage aiMessage = new AIChatMessage(conversation, "ASSISTANT", aiResponseText);
         aiMessage.setTokensUsed(tokensUsed);
-        aiMessage.setAiModelUsed(aiModel);
+        aiMessage.setAiModelUsed(geminiResponse.model());
         aiMessage = messageRepository.save(aiMessage);
 
-        // Update conversation
         conversation.setUpdatedAt(LocalDateTime.now());
         if (conversation.getTitle() == null && conversation.getMessages().size() <= 2) {
             conversation.setTitle(generateConversationTitle(request.getMessage()));
         }
         conversationRepository.save(conversation);
 
-        log.info("AI response generated for conversation: {}, tokens used: {}", 
-                 conversation.getId(), tokensUsed);
+        log.info("AI response generated for conversation: {}, tokens used: {}",
+                conversation.getId(), tokensUsed);
 
         return AIChatResponse.builder()
                 .conversationId(conversation.getId())
@@ -111,7 +90,7 @@ public class AIChatServiceImpl implements AIChatService {
                 .category(conversation.getCategory())
                 .timestamp(aiMessage.getCreatedAt())
                 .tokensUsed(tokensUsed)
-                .aiModelUsed(aiModel)
+                .aiModelUsed(geminiResponse.model())
                 .build();
     }
 
@@ -150,9 +129,9 @@ public class AIChatServiceImpl implements AIChatService {
                             .map(msg -> new AIChatHistoryResponse.ChatMessage(
                                     msg.getId(),
                                     msg.getRole(),
-                                    msg.getContent().length() > 100 ? 
-                                            msg.getContent().substring(0, 100) + "..." : 
-                                            msg.getContent(),
+                                    msg.getContent().length() > 100
+                                            ? msg.getContent().substring(0, 100) + "..."
+                                            : msg.getContent(),
                                     msg.getCreatedAt()))
                             .collect(Collectors.toList());
 
@@ -221,14 +200,16 @@ public class AIChatServiceImpl implements AIChatService {
             throw new ValidationException("Message does not belong to this conversation");
         }
 
-        // Generate new response
-        String newResponse = generateAIResponse(conversation, originalMessage.getContent());
-        int tokensUsed = estimateTokens(originalMessage.getContent() + newResponse);
+        GeminiClientService.GeminiResponse geminiResponse =
+                generateAIResponse(conversation, originalMessage.getContent());
+        String newResponse = geminiResponse.text();
+        int tokensUsed = geminiResponse.totalTokens() != null
+                ? geminiResponse.totalTokens()
+                : estimateTokens(originalMessage.getContent() + newResponse);
 
-        // Save new response
         AIChatMessage newAiMessage = new AIChatMessage(conversation, "ASSISTANT", newResponse);
         newAiMessage.setTokensUsed(tokensUsed);
-        newAiMessage.setAiModelUsed(aiModel);
+        newAiMessage.setAiModelUsed(geminiResponse.model());
         newAiMessage = messageRepository.save(newAiMessage);
 
         return AIChatResponse.builder()
@@ -239,7 +220,7 @@ public class AIChatServiceImpl implements AIChatService {
                 .category(conversation.getCategory())
                 .timestamp(newAiMessage.getCreatedAt())
                 .tokensUsed(tokensUsed)
-                .aiModelUsed(aiModel)
+                .aiModelUsed(geminiResponse.model())
                 .build();
     }
 
@@ -251,67 +232,45 @@ public class AIChatServiceImpl implements AIChatService {
 
         AIChatConversation newConversation = new AIChatConversation(
                 user,
-                null, // Title will be set after first message
+                null,
                 request.getCategory()
         );
         return conversationRepository.save(newConversation);
     }
 
-    private String generateAIResponse(AIChatConversation conversation, String userMessage) {
+    private GeminiClientService.GeminiResponse generateAIResponse(AIChatConversation conversation, String userMessage) {
         try {
-            // Build conversation context
-            List<Map<String, String>> messages = conversation.getMessages().stream()
-                    .map(msg -> {
-                        Map<String, String> map = new HashMap<>();
-                        map.put("role", msg.getRole().toLowerCase());
-                        map.put("content", msg.getContent());
-                        return map;
-                    })
-                    .collect(Collectors.toList());
+            List<AIChatMessage> conversationMessages = conversation.getMessages();
+            int historySize = conversationMessages.size();
 
-            // Add system prompt if this is a new conversation
-            if (messages.isEmpty()) {
-                Map<String, String> systemPrompt = new HashMap<>();
-                systemPrompt.put("role", "system");
-                systemPrompt.put("content", promptBuilder.buildWellbeingCoachPrompt(conversation.getCategory()));
-                messages.add(0, systemPrompt);
-            }
-
-            // Add current user message
-            Map<String, String> currentMessage = new HashMap<>();
-            currentMessage.put("role", "user");
-            currentMessage.put("content", userMessage);
-            messages.add(currentMessage);
-
-            // Prepare API request
-            Map<String, Object> requestBody = new HashMap<>();
-            requestBody.put("model", aiModel);
-            requestBody.put("messages", messages);
-            requestBody.put("max_tokens", maxTokens);
-            requestBody.put("temperature", temperature);
-
-            // Call AI API
-            Map<String, Object> response = restTemplate.postForObject(
-                    aiChatApiUrl,
-                    requestBody,
-                    Map.class
-            );
-
-            if (response != null && response.containsKey("choices")) {
-                List<?> choices = (List<?>) response.get("choices");
-                if (!choices.isEmpty()) {
-                    Map<?, ?> firstChoice = (Map<?, ?>) choices.get(0);
-                    Map<?, ?> message = (Map<?, ?>) firstChoice.get("message");
-                    return (String) message.get("content");
+            if (historySize > 0) {
+                AIChatMessage lastMessage = conversationMessages.get(historySize - 1);
+                if ("USER".equalsIgnoreCase(lastMessage.getRole())
+                        && userMessage.equals(lastMessage.getContent())) {
+                    historySize--;
                 }
             }
 
-            // Fallback response
-            return promptBuilder.getFallbackResponse(conversation.getCategory());
+            List<GeminiClientService.ChatTurn> history = conversationMessages.stream()
+                    .limit(historySize)
+                    .filter(msg -> msg.getContent() != null && !msg.getContent().isBlank())
+                    .map(msg -> new GeminiClientService.ChatTurn(msg.getRole(), msg.getContent()))
+                    .collect(Collectors.toList());
+
+            return geminiClientService.generateContent(
+                    promptBuilder.buildWellbeingCoachPrompt(conversation.getCategory()),
+                    history,
+                    userMessage,
+                    false
+            );
 
         } catch (Exception e) {
-            log.error("Failed to generate AI response: {}", e.getMessage());
-            return promptBuilder.getFallbackResponse(conversation.getCategory());
+            log.error("Failed to generate AI response: {}", e.getMessage(), e);
+            return new GeminiClientService.GeminiResponse(
+                    promptBuilder.getFallbackResponse(conversation.getCategory()),
+                    estimateTokens(userMessage),
+                    geminiClientService.getConfiguredModel()
+            );
         }
     }
 
@@ -323,7 +282,6 @@ public class AIChatServiceImpl implements AIChatService {
     }
 
     private int estimateTokens(String text) {
-        // Rough estimation: ~4 characters per token
         return (int) Math.ceil(text.length() / 4.0);
     }
 

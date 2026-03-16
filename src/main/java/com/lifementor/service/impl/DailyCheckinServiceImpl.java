@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lifementor.dto.request.DailyCheckinBatchRequest;
 import com.lifementor.dto.request.DailyCheckinRequest;
 import com.lifementor.dto.response.DailyCheckinAnalyticsResponse;
+import com.lifementor.dto.response.DailyCheckinQuestionResponse;
 import com.lifementor.dto.response.DailyCheckinResponse;
 import com.lifementor.dto.response.WellbeingAlertResponse;
 import com.lifementor.entity.DailyCheckinQuestion;
@@ -140,6 +141,20 @@ public class DailyCheckinServiceImpl implements DailyCheckinService {
 
         return responses.stream()
                 .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DailyCheckinQuestionResponse> getActiveQuestions() {
+        return questionRepository.findByIsActiveTrueOrderByDisplayOrderAsc().stream()
+                .map(this::mapQuestionToDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DailyCheckinQuestionResponse> getActiveQuestionsByCategory(String category) {
+        return questionRepository.findByCategoryAndIsActiveTrueOrderByDisplayOrderAsc(category.toUpperCase()).stream()
+                .map(this::mapQuestionToDTO)
                 .collect(Collectors.toList());
     }
 
@@ -426,6 +441,18 @@ public class DailyCheckinServiceImpl implements DailyCheckinService {
                 .suggestedAction(alert.getSuggestedAction())
                 .resolved(alert.isResolved())
                 .createdAt(alert.getCreatedAt())
+                .build();
+    }
+
+    private DailyCheckinQuestionResponse mapQuestionToDTO(DailyCheckinQuestion question) {
+        return DailyCheckinQuestionResponse.builder()
+                .id(question.getId())
+                .question(question.getQuestion())
+                .questionType(question.getQuestionType())
+                .category(question.getCategory())
+                .options(question.getOptions())
+                .displayOrder(question.getDisplayOrder())
+                .createdAt(question.getCreatedAt())
                 .build();
     }
 }

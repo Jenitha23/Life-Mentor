@@ -4,6 +4,7 @@ import com.lifementor.dto.request.DailyCheckinBatchRequest;
 import com.lifementor.dto.request.DailyCheckinRequest;
 import com.lifementor.dto.response.ApiResponse;
 import com.lifementor.dto.response.DailyCheckinAnalyticsResponse;
+import com.lifementor.dto.response.DailyCheckinQuestionResponse;
 import com.lifementor.dto.response.DailyCheckinResponse;
 import com.lifementor.dto.response.WellbeingAlertResponse;
 import com.lifementor.service.DailyCheckinService;
@@ -29,6 +30,28 @@ public class DailyCheckinController {
 
     public DailyCheckinController(DailyCheckinService checkinService) {
         this.checkinService = checkinService;
+    }
+
+    @GetMapping("/questions")
+    public ResponseEntity<ApiResponse> getActiveQuestions() {
+        try {
+            List<DailyCheckinQuestionResponse> questions = checkinService.getActiveQuestions();
+            return ResponseEntity.ok(ApiResponse.success("Daily check-in questions retrieved successfully", questions));
+        } catch (Exception e) {
+            log.error("Failed to retrieve daily check-in questions: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    @GetMapping("/questions/category/{category}")
+    public ResponseEntity<ApiResponse> getQuestionsByCategory(@PathVariable String category) {
+        try {
+            List<DailyCheckinQuestionResponse> questions = checkinService.getActiveQuestionsByCategory(category);
+            return ResponseEntity.ok(ApiResponse.success("Category questions retrieved successfully", questions));
+        } catch (Exception e) {
+            log.error("Failed to retrieve category questions: {}", e.getMessage());
+            return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
+        }
     }
 
     @PostMapping("/batch")

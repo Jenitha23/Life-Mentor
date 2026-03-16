@@ -9,6 +9,8 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class EmailServiceImpl implements EmailService {
 
@@ -139,6 +141,43 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             log.error("Failed to send password changed email to {}: {}", toEmail, e.getMessage(), e);
             // Don't throw exception - password change already happened
+        }
+    }
+
+    @Override
+    @Async
+    public void sendDailyCheckinReminderEmail(String toEmail, String userName, List<String> questions) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(applicationName + " - Your Daily Wellbeing Check-in");
+
+            StringBuilder questionList = new StringBuilder();
+            for (int i = 0; i < questions.size(); i++) {
+                questionList.append(i + 1).append(". ").append(questions.get(i)).append("\n");
+            }
+
+            String emailText = String.format(
+                    "Dear %s,\n\n" +
+                            "Here is your daily wellbeing check-in from %s.\n\n" +
+                            "Take a moment to reflect on these questions:\n" +
+                            "%s\n" +
+                            "Small daily reflection can help you notice patterns and take better care of yourself.\n\n" +
+                            "Best regards,\n" +
+                            "The %s Team",
+                    userName,
+                    applicationName,
+                    questionList,
+                    applicationName
+            );
+
+            message.setText(emailText);
+            mailSender.send(message);
+            log.info("Daily check-in reminder email sent to: {}", toEmail);
+
+        } catch (Exception e) {
+            log.error("Failed to send daily check-in reminder email to {}: {}", toEmail, e.getMessage(), e);
         }
     }
 }

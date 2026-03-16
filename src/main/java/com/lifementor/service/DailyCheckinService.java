@@ -3,6 +3,7 @@ package com.lifementor.service;
 import com.lifementor.dto.request.DailyCheckinBatchRequest;
 import com.lifementor.dto.request.DailyCheckinRequest;
 import com.lifementor.dto.response.DailyCheckinAnalyticsResponse;
+import com.lifementor.dto.response.DailyCheckinQuestionResponse;
 import com.lifementor.dto.response.DailyCheckinResponse;
 import com.lifementor.dto.response.WellbeingAlertResponse;
 
@@ -17,6 +18,10 @@ public interface DailyCheckinService {
     DailyCheckinResponse submitSingleResponse(UUID userId, DailyCheckinRequest request);
 
     List<DailyCheckinResponse> getTodaysCheckin(UUID userId);
+
+    List<DailyCheckinQuestionResponse> getActiveQuestions();
+
+    List<DailyCheckinQuestionResponse> getActiveQuestionsByCategory(String category);
 
     List<DailyCheckinResponse> getCheckinByDate(UUID userId, LocalDate date);
 
