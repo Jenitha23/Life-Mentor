@@ -98,6 +98,9 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<WellbeingAlert> wellbeingAlerts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<Notification> notifications = new ArrayList<>();
+
     // Constructors
     public User() {}
 
@@ -171,6 +174,9 @@ public class User {
 
     public List<WellbeingAlert> getWellbeingAlerts() { return wellbeingAlerts; }
     public void setWellbeingAlerts(List<WellbeingAlert> wellbeingAlerts) { this.wellbeingAlerts = wellbeingAlerts; }
+
+    public List<Notification> getNotifications() { return notifications; }
+    public void setNotifications(List<Notification> notifications) { this.notifications = notifications; }
 
     // Business logic methods
     public void incrementFailedLoginAttempts() {
