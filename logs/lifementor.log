@@ -6543,3 +6543,71 @@ This generated password is for development use only. Your security configuration
 2026-03-16 22:39:22 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
 2026-03-16 22:39:22 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-4 - Shutdown initiated...
 2026-03-16 22:39:22 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-4 - Shutdown completed.
+2026-03-17 16:17:59 [restartedMain] INFO  c.lifementor.LifeMentorApplication - Starting LifeMentorApplication using Java 17.0.16 with PID 12512 (C:\Users\Jenitha\Desktop\Life-Mentor\target\classes started by Jenitha in C:\Users\Jenitha\Desktop\Life-Mentor)
+2026-03-17 16:17:59 [restartedMain] INFO  c.lifementor.LifeMentorApplication - No active profile set, falling back to 1 default profile: "default"
+2026-03-17 16:17:59 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-03-17 16:17:59 [restartedMain] INFO  o.s.b.d.e.DevToolsPropertyDefaultsPostProcessor - For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-03-17 16:18:01 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-03-17 16:18:02 [restartedMain] INFO  o.s.d.r.c.RepositoryConfigurationDelegate - Finished Spring Data repository scanning in 258 ms. Found 10 JPA repository interfaces.
+2026-03-17 16:18:02 [restartedMain] WARN  o.s.c.s.PostProcessorRegistrationDelegate$BeanPostProcessorChecker - Bean 'validationConfig' of type [com.lifementor.config.ValidationConfig$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). The currently created BeanPostProcessor [methodValidationPostProcessor] is declared through a non-static factory method on that class; consider declaring it as static instead.
+2026-03-17 16:18:03 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat initialized with port 8080 (http)
+2026-03-17 16:18:03 [restartedMain] INFO  o.a.catalina.core.StandardService - Starting service [Tomcat]
+2026-03-17 16:18:03 [restartedMain] INFO  o.a.catalina.core.StandardEngine - Starting Servlet engine: [Apache Tomcat/10.1.16]
+2026-03-17 16:18:03 [restartedMain] INFO  o.a.c.c.C.[Tomcat].[localhost].[/] - Initializing Spring embedded WebApplicationContext
+2026-03-17 16:18:03 [restartedMain] INFO  o.s.b.w.s.c.ServletWebServerApplicationContext - Root WebApplicationContext: initialization completed in 4663 ms
+2026-03-17 16:18:03 [restartedMain] WARN  o.s.b.a.o.j.JpaBaseConfiguration$JpaWebConfiguration - spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2026-03-17 16:18:04 [restartedMain] INFO  o.h.jpa.internal.util.LogHelper - HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-03-17 16:18:04 [restartedMain] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 6.3.1.Final
+2026-03-17 16:18:04 [restartedMain] INFO  o.h.c.i.RegionFactoryInitiator - HHH000026: Second-level cache disabled
+2026-03-17 16:18:05 [restartedMain] INFO  o.s.o.j.p.SpringPersistenceUnitInfo - No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-03-17 16:18:05 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Starting...
+2026-03-17 16:18:05 [restartedMain] INFO  com.zaxxer.hikari.pool.HikariPool - HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@150d362d
+2026-03-17 16:18:05 [restartedMain] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Start completed.
+2026-03-17 16:18:05 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000025: MySQL8Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-03-17 16:18:05 [restartedMain] WARN  org.hibernate.orm.deprecation - HHH90000026: MySQL8Dialect has been deprecated; use org.hibernate.dialect.MySQLDialect instead
+2026-03-17 16:18:08 [restartedMain] INFO  o.h.e.t.j.p.i.JtaPlatformInitiator - HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-03-17 16:18:08 [restartedMain] DEBUG org.hibernate.SQL - 
+    create table notifications (
+        id BINARY(16) not null,
+        action_url varchar(255),
+        created_at datetime(6),
+        message TEXT not null,
+        is_read bit not null,
+        read_at datetime(6),
+        title varchar(150) not null,
+        type varchar(50) not null,
+        updated_at datetime(6),
+        user_id BINARY(16) not null,
+        primary key (id)
+    ) engine=InnoDB
+2026-03-17 16:18:09 [restartedMain] DEBUG org.hibernate.SQL - 
+    alter table notifications 
+       add constraint FK9y21adhxn0ayjhfocscqox7bh 
+       foreign key (user_id) 
+       references users (id)
+2026-03-17 16:18:09 [restartedMain] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-03-17 16:18:10 [restartedMain] INFO  o.s.d.j.r.query.QueryEnhancerFactory - Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-03-17 16:18:11 [restartedMain] INFO  c.l.service.GeminiClientService - Gemini client configured with model gemini-2.5-flash
+2026-03-17 16:18:11 [restartedMain] INFO  c.l.controller.AIFeedbackController - AIFeedbackController initialized with AIService: AIServiceImpl$$SpringCGLIB$$0
+2026-03-17 16:18:11 [restartedMain] INFO  c.l.s.i.LifestyleAssessmentServiceImpl - ? AIService successfully initialized for LifestyleAssessmentService
+2026-03-17 16:18:12 [restartedMain] WARN  o.s.b.a.s.s.UserDetailsServiceAutoConfiguration - 
+
+Using generated security password: bd92dcbf-8327-464f-8245-b2a1d2725ade
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-03-17 16:18:13 [restartedMain] WARN  o.s.b.a.t.ThymeleafAutoConfiguration$DefaultTemplateResolverConfiguration - Cannot find template location: classpath:/templates/ (please add some templates, check your Thymeleaf configuration, or set spring.thymeleaf.check-template-location=false)
+2026-03-17 16:18:13 [restartedMain] INFO  o.s.b.d.a.OptionalLiveReloadServer - LiveReload server is running on port 35729
+2026-03-17 16:18:13 [restartedMain] INFO  o.s.b.w.e.tomcat.TomcatWebServer - Tomcat started on port 8080 (http) with context path ''
+2026-03-17 16:18:13 [restartedMain] INFO  c.lifementor.LifeMentorApplication - Started LifeMentorApplication in 15.797 seconds (process running for 17.685)
+2026-03-17 16:18:13 [restartedMain] DEBUG org.hibernate.SQL - 
+    /* select
+        count(*) 
+    from
+        DailyCheckinQuestion x */ select
+            count(*) 
+        from
+            daily_checkin_questions dcq1_0
+2026-03-17 16:18:43 [SpringApplicationShutdownHook] INFO  o.s.o.j.LocalContainerEntityManagerFactoryBean - Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-03-17 16:18:43 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown initiated...
+2026-03-17 16:18:43 [SpringApplicationShutdownHook] INFO  com.zaxxer.hikari.HikariDataSource - HikariPool-1 - Shutdown completed.

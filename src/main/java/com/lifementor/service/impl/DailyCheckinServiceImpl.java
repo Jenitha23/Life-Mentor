@@ -19,6 +19,7 @@ import com.lifementor.repository.DailyCheckinResponseRepository;
 import com.lifementor.repository.UserRepository;
 import com.lifementor.repository.WellbeingAlertRepository;
 import com.lifementor.service.DailyCheckinService;
+import com.lifementor.service.NotificationService;
 import com.lifementor.util.WellbeingAnalyzer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,18 +43,21 @@ public class DailyCheckinServiceImpl implements DailyCheckinService {
     private final UserRepository userRepository;
     private final WellbeingAlertRepository alertRepository;
     private final WellbeingAnalyzer wellbeingAnalyzer;
+    private final NotificationService notificationService;
     private final ObjectMapper objectMapper;
 
     public DailyCheckinServiceImpl(DailyCheckinResponseRepository responseRepository,
                                    DailyCheckinQuestionRepository questionRepository,
                                    UserRepository userRepository,
                                    WellbeingAlertRepository alertRepository,
-                                   WellbeingAnalyzer wellbeingAnalyzer) {
+                                   WellbeingAnalyzer wellbeingAnalyzer,
+                                   NotificationService notificationService) {
         this.responseRepository = responseRepository;
         this.questionRepository = questionRepository;
         this.userRepository = userRepository;
         this.alertRepository = alertRepository;
         this.wellbeingAnalyzer = wellbeingAnalyzer;
+        this.notificationService = notificationService;
         this.objectMapper = new ObjectMapper();
     }
 
@@ -92,7 +96,7 @@ public class DailyCheckinServiceImpl implements DailyCheckinService {
         log.info("Successfully submitted {} responses for user: {}", savedResponses.size(), userId);
 
         // Check for wellbeing alerts
-        checkAndCreateAlerts(userId, savedResponses);
+        checkAndCreateAlerts(userId);
 
         return savedResponses.stream()
                 .map(this::mapToDTO)
@@ -127,6 +131,8 @@ public class DailyCheckinServiceImpl implements DailyCheckinService {
         response.setMetadata(request.getMetadata());
 
         response = responseRepository.save(response);
+
+        checkAndCreateAlerts(userId);
 
         return mapToDTO(response);
     }
@@ -232,13 +238,10 @@ public class DailyCheckinServiceImpl implements DailyCheckinService {
                         userId, sevenDaysAgo, today);
 
         List<WellbeingAlert> alerts = wellbeingAnalyzer.generateAlerts(user, last7Days);
-        
-        // Save alerts to database
-        for (WellbeingAlert alert : alerts) {
-            alertRepository.save(alert);
-        }
 
-        return alerts.stream()
+        List<WellbeingAlert> savedAlerts = saveNewAlerts(user, alerts, true);
+
+        return savedAlerts.stream()
                 .map(this::mapAlertToDTO)
                 .collect(Collectors.toList());
     }
@@ -409,9 +412,61 @@ public class DailyCheckinServiceImpl implements DailyCheckinService {
         return count > 0 ? sum / count : 0.0;
     }
 
-    private void checkAndCreateAlerts(UUID userId, List<DailyCheckinResponseEntity> responses) {
-        // Implementation for creating alerts
-        log.debug("Checking alerts for {} responses from user: {}", responses.size(), userId);
+    private void checkAndCreateAlerts(UUID userId) {
+        LocalDate today = LocalDate.now();
+        LocalDate sevenDaysAgo = today.minusDays(7);
+        User user = getUserById(userId);
+
+        List<DailyCheckinResponseEntity> recentResponses =
+                responseRepository.findByUserIdAndResponseDateBetweenOrderByResponseDateAscQuestionIdAsc(
+                        userId, sevenDaysAgo, today);
+
+        List<WellbeingAlert> alerts = wellbeingAnalyzer.generateAlerts(user, recentResponses);
+        List<WellbeingAlert> savedAlerts = saveNewAlerts(user, alerts, true);
+
+        log.debug("Created {} new wellbeing alerts for user: {}", savedAlerts.size(), userId);
+    }
+
+    private List<WellbeingAlert> saveNewAlerts(User user, List<WellbeingAlert> alerts, boolean createNotifications) {
+        if (alerts == null || alerts.isEmpty()) {
+            return List.of();
+        }
+
+        Set<String> existingActiveAlertKeys = alertRepository
+                .findByUserIdAndResolvedFalseOrderByCreatedAtDesc(user.getId())
+                .stream()
+                .map(this::buildAlertKey)
+                .collect(Collectors.toSet());
+
+        List<WellbeingAlert> savedAlerts = new ArrayList<>();
+        for (WellbeingAlert alert : alerts) {
+            String alertKey = buildAlertKey(alert);
+            if (!existingActiveAlertKeys.add(alertKey)) {
+                continue;
+            }
+
+            WellbeingAlert savedAlert = alertRepository.save(alert);
+            savedAlerts.add(savedAlert);
+
+            if (createNotifications) {
+                notificationService.createNotification(
+                        user,
+                        "WELLBEING_ALERT",
+                        "New wellbeing alert",
+                        savedAlert.getMessage(),
+                        "/wellbeing/alerts"
+                );
+            }
+        }
+
+        return savedAlerts;
+    }
+
+    private String buildAlertKey(WellbeingAlert alert) {
+        return String.join("|",
+                alert.getLevel() == null ? "" : alert.getLevel(),
+                alert.getMessage() == null ? "" : alert.getMessage(),
+                alert.getSuggestedAction() == null ? "" : alert.getSuggestedAction());
     }
 
     private User getUserById(UUID userId) {

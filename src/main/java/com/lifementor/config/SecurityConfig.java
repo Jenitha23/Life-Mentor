@@ -75,6 +75,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/daily-checkin/**").authenticated()     
                         .requestMatchers("/api/goals/**").authenticated()             
                         .requestMatchers("/api/wellbeing/**").authenticated()         
+                        .requestMatchers("/api/notifications/**").authenticated()
                         // Any other request requires authentication
                         .anyRequest().authenticated()
                 )

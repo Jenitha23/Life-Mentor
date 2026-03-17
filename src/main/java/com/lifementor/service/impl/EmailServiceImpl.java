@@ -1,5 +1,8 @@
 package com.lifementor.service.impl;
 
+import com.lifementor.dto.response.UserGoalResponse;
+import com.lifementor.dto.response.WellbeingAlertResponse;
+import com.lifementor.dto.response.WellbeingSummaryResponse;
 import com.lifementor.service.EmailService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +13,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
 
 @Service
 public class EmailServiceImpl implements EmailService {
@@ -179,5 +183,123 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             log.error("Failed to send daily check-in reminder email to {}: {}", toEmail, e.getMessage(), e);
         }
+    }
+
+    @Override
+    @Async
+    public void sendWeeklyWellbeingSummaryEmail(String toEmail, String userName, WellbeingSummaryResponse summary) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(applicationName + " - Your Weekly Wellbeing Summary");
+            message.setText(buildWeeklySummaryEmail(userName, summary));
+
+            mailSender.send(message);
+            log.info("Weekly wellbeing summary email sent to: {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send weekly wellbeing summary email to {}: {}", toEmail, e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Async
+    public void sendWellbeingAlertEmail(String toEmail, String userName, List<WellbeingAlertResponse> alerts) {
+        if (alerts == null || alerts.isEmpty()) {
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setSubject(applicationName + " - Wellbeing Alert");
+            message.setText(buildWellbeingAlertEmail(userName, alerts));
+
+            mailSender.send(message);
+            log.info("Wellbeing alert email sent to: {}", toEmail);
+        } catch (Exception e) {
+            log.error("Failed to send wellbeing alert email to {}: {}", toEmail, e.getMessage(), e);
+        }
+    }
+
+    private String buildWeeklySummaryEmail(String userName, WellbeingSummaryResponse summary) {
+        String activeGoalsText = formatActiveGoals(summary.getActiveGoals());
+        String recommendationText = summary.getTodaysRecommendation() == null
+                ? "Keep showing up for yourself this week."
+                : summary.getTodaysRecommendation().getTitle() + ": " + summary.getTodaysRecommendation().getAction();
+
+        return String.format(
+                Locale.US,
+                "Dear %s,\n\n" +
+                        "Here is your weekly wellbeing summary from %s.\n\n" +
+                        "Summary date: %s\n" +
+                        "Current streak: %d day(s)\n" +
+                        "Total check-in days: %d\n" +
+                        "Average mood: %.1f\n" +
+                        "Mood trend: %s\n" +
+                        "Active alerts: %d\n\n" +
+                        "Active goals:\n%s\n" +
+                        "Recommended focus:\n%s\n\n" +
+                        "Keep going. Small steps add up over time.\n\n" +
+                        "Best regards,\n" +
+                        "The %s Team",
+                userName,
+                applicationName,
+                summary.getSummaryDate(),
+                summary.getCurrentStreak(),
+                summary.getTotalCheckins(),
+                summary.getAverageMood(),
+                summary.getMoodTrend(),
+                summary.getActiveAlerts() == null ? 0 : summary.getActiveAlerts().size(),
+                activeGoalsText,
+                recommendationText,
+                applicationName
+        );
+    }
+
+    private String buildWellbeingAlertEmail(String userName, List<WellbeingAlertResponse> alerts) {
+        StringBuilder alertText = new StringBuilder();
+        for (int i = 0; i < alerts.size(); i++) {
+            WellbeingAlertResponse alert = alerts.get(i);
+            alertText.append(i + 1)
+                    .append(". [")
+                    .append(alert.getLevel())
+                    .append("] ")
+                    .append(alert.getMessage());
+
+            if (alert.getSuggestedAction() != null && !alert.getSuggestedAction().isBlank()) {
+                alertText.append("\n   Suggested action: ").append(alert.getSuggestedAction());
+            }
+            alertText.append("\n");
+        }
+
+        return String.format(
+                "Dear %s,\n\n" +
+                        "We noticed some wellbeing updates that may need your attention:\n\n" +
+                        "%s\n" +
+                        "Take a few minutes to review your wellbeing dashboard and check in with yourself.\n\n" +
+                        "Best regards,\n" +
+                        "The %s Team",
+                userName,
+                alertText,
+                applicationName
+        );
+    }
+
+    private String formatActiveGoals(List<UserGoalResponse> activeGoals) {
+        if (activeGoals == null || activeGoals.isEmpty()) {
+            return "- No active goals right now";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        activeGoals.stream()
+                .limit(3)
+                .forEach(goal -> builder.append("- ")
+                        .append(goal.getGoalType())
+                        .append(" (")
+                        .append(goal.getProgressPercentage() == null ? 0 : goal.getProgressPercentage())
+                        .append("% complete)\n"));
+        return builder.toString();
     }
 }
