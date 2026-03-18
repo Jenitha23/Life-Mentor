@@ -59,7 +59,7 @@ public class WellbeingController {
     @PostMapping("/alerts/{alertId}/resolve")
     public ResponseEntity<ApiResponse> resolveAlert(
             @RequestAttribute("userId") UUID userId,
-            @PathVariable UUID alertId) {
+            @PathVariable("alertId") UUID alertId) {
         try {
             wellbeingService.resolveAlert(userId, alertId);
             return ResponseEntity.ok(ApiResponse.success("Alert resolved successfully"));

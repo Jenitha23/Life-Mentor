@@ -1,6 +1,7 @@
 package com.lifementor.config;
 
 import com.lifementor.filter.JwtAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -31,7 +32,7 @@ public class SecurityConfig {
     // JWT Authentication Filter
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter(
-            HandlerExceptionResolver handlerExceptionResolver,
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver handlerExceptionResolver,
             com.lifementor.service.TokenService tokenService) {
         return new JwtAuthenticationFilter(tokenService, handlerExceptionResolver);
     }

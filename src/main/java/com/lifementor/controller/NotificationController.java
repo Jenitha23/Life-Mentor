@@ -50,7 +50,7 @@ public class NotificationController {
     @PostMapping("/{notificationId}/read")
     public ResponseEntity<ApiResponse> markAsRead(
             @RequestAttribute("userId") UUID userId,
-            @PathVariable UUID notificationId) {
+            @PathVariable("notificationId") UUID notificationId) {
         try {
             notificationService.markAsRead(userId, notificationId);
             return ResponseEntity.ok(ApiResponse.success("Notification marked as read"));

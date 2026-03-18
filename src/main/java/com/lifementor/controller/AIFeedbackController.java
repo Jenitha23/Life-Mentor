@@ -34,7 +34,7 @@ public class AIFeedbackController {
 
     @GetMapping("/assessment/{assessmentId}")
     public ResponseEntity<ApiResponse> getFeedbackForAssessment(
-            @PathVariable UUID assessmentId) {
+          @PathVariable("assessmentId") UUID assessmentId) {
         try {
             log.info("Fetching AI feedback for assessment: {}", assessmentId);
 
@@ -68,7 +68,7 @@ public class AIFeedbackController {
 
     @PostMapping("/generate/{assessmentId}")
     public ResponseEntity<ApiResponse> generateFeedback(
-            @PathVariable UUID assessmentId) {
+            @PathVariable("assessmentId") UUID assessmentId) {
         try {
             log.info("Manual AI feedback generation requested for assessment: {}", assessmentId);
 
@@ -160,7 +160,7 @@ public class AIFeedbackController {
 
     @DeleteMapping("/assessment/{assessmentId}")
     public ResponseEntity<ApiResponse> deleteFeedback(
-            @PathVariable UUID assessmentId) {
+            @PathVariable("assessmentId") UUID assessmentId ){
         try {
             log.info("Deleting AI feedback for assessment: {}", assessmentId);
 
