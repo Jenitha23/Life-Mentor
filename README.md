@@ -6,108 +6,115 @@ Spring Boot backend for the Life Mentor platform, an AI-assisted lifestyle and w
 
 This service exposes REST APIs for:
 
-- user authentication and account recovery
-- profile management and profile picture handling
-- lifestyle assessment capture and AI-generated feedback
-- AI wellbeing chat conversations
-- daily check-in questions, responses, analytics, and streaks
-- personal wellbeing goals and progress tracking
-- wellbeing summaries, alerts, and recommendations
-- scheduled daily reminder emails for unanswered check-ins
+* user authentication and account recovery
+* profile management and profile picture handling
+* lifestyle assessment capture and AI-generated feedback
+* AI wellbeing chat conversations
+* daily check-in questions, responses, analytics, and streaks
+* personal wellbeing goals and progress tracking
+* wellbeing summaries, alerts, and recommendations
+* notification management
+* scheduled daily reminder emails for unanswered check-ins
 
-The backend is designed for a React frontend, persists data in MySQL, and integrates with Gemini for conversational AI and assessment feedback.
+The backend is designed for a React frontend, persists data in a SQL database using Microsoft SQL Server, manages database schema changes with Flyway migrations, and integrates with Gemini for conversational AI and assessment feedback.
 
 ## Core Capabilities
 
 ### Authentication and Security
 
-- JWT-based stateless authentication
-- user registration and login
-- forgot-password and reset-password flow
-- password hashing with BCrypt
-- failed login attempt tracking and temporary account lock
-- protected routes with Spring Security
+* JWT-based stateless authentication
+* user registration and login
+* forgot-password and reset-password flow
+* password hashing with BCrypt
+* failed login attempt tracking and temporary account lock
+* protected routes with Spring Security
 
 ### Profile Management
 
-- fetch and update user profile
-- change password
-- upload and delete profile pictures
-- delete account
-- assessment completion status check
+* fetch and update user profile
+* change password
+* upload and delete profile pictures
+* delete account
+* deactivate account endpoint
+* assessment completion status check
 
 ### Lifestyle Assessment
 
-- create, update, fetch, and delete a lifestyle assessment
-- tracks sleep, meals, exercise, study/work hours, screen time, mood, and wellbeing notes
-- validates assessment rules such as sleep duration and hour limits
-- generates structured AI feedback for submitted assessments
+* create, update, fetch, and delete a lifestyle assessment
+* tracks sleep, meals, exercise, study/work hours, screen time, mood, and wellbeing notes
+* validates assessment rules such as sleep duration and hour limits
+* generates structured AI feedback for submitted assessments
 
 ### AI Features
 
-- Gemini-powered wellbeing chatbot
-- conversation history and category-based chat sessions
-- save chat messages and regenerate responses
-- AI-generated assessment feedback with:
-  - summary
-  - positive highlights
-  - suggestions
-  - motivational message
-  - risk level
+* Gemini-powered wellbeing chatbot
+* conversation history and category-based chat sessions
+* save chat messages and regenerate responses
+* AI-generated assessment feedback with:
+
+  * summary
+  * positive highlights
+  * suggestions
+  * motivational message
+  * risk level
 
 ### Daily Check-Ins
 
-- fetch active daily check-in questions
-- fetch questions by category
-- submit batch or single daily responses
-- prevent duplicate same-day responses
-- retrieve today's or a selected date's responses
-- streak tracking and completion status
-- category-level analytics and mood trends
-- seeded default questions for nutrition, sleep, stress, mood, exercise, productivity, and social connection
+* fetch active daily check-in questions
+* fetch questions by category
+* submit batch or single daily responses
+* prevent duplicate same-day responses
+* retrieve today's or a selected date's responses
+* streak tracking and completion status
+* category-level analytics and mood trends
+* seeded default questions for nutrition, sleep, stress, mood, exercise, productivity, and social connection
 
 ### Goals and Wellbeing
 
-- create, update, complete, fetch, and delete personal goals
-- progress percentage tracking
-- active and overdue goals
-- wellbeing summary generation
-- alert generation and alert resolution
-- date-range trend analysis
-- daily recommendations based on recent user data
+* create, update, complete, fetch, and delete personal goals
+* progress percentage tracking
+* active and overdue goals
+* wellbeing summary generation
+* alert generation and alert resolution
+* date-range trend analysis
+* daily recommendations based on recent user data
 
 ### Notifications and Scheduling
 
-- scheduled daily check-in reminder emails
-- reminder emails sent only to users who have not completed today's check-in
-- configurable reminder question count
-- scheduler foundation for weekly summaries and future alert notifications
+* in-app notification support
+* scheduled daily check-in reminder emails
+* reminder emails sent only to users who have not completed today's check-in
+* configurable reminder question count
+* scheduler foundation for weekly summaries and future alert notifications
 
 ## Tech Stack
 
-- Java 17
-- Spring Boot 3
-- Spring Web
-- Spring Security
-- Spring Data JPA
-- Hibernate
-- MySQL
-- Jakarta Validation
-- Java Mail Sender
-- JWT (`jjwt`)
-- Gemini API
+* Java 17
+* Spring Boot 3
+* Spring Web
+* Spring Security
+* Spring Data JPA
+* Hibernate
+* Microsoft SQL Server
+* Flyway Database Migrations
+* Jakarta Validation
+* Java Mail Sender
+* JWT (`jjwt`)
+* Gemini API
 
 ## Architecture
 
 The backend follows a layered architecture:
 
-- `controller`: request handling and REST endpoints
-- `service`: business logic
-- `repository`: data access
-- `entity`: persistence models
-- `dto`: request and response contracts
-- `config`: security, async, seeding, storage, and app configuration
-- `util`: prompt building and wellbeing analysis
+* `controller`: request handling and REST endpoints
+* `service`: business logic
+* `repository`: data access
+* `entity`: persistence models
+* `dto`: request and response contracts
+* `config`: security, async, seeding, storage, and app configuration
+* `filter`: JWT request filtering
+* `exception`: centralized exception handling
+* `util`: prompt building and wellbeing analysis
 
 ## API Modules
 
@@ -115,103 +122,113 @@ The backend follows a layered architecture:
 
 Base path: `/api/auth`
 
-- register
-- login
-- logout
-- forgot password
-- reset password
-- validate token
+* register
+* login
+* logout
+* forgot password
+* reset password
+* validate token
 
 ### Profile
 
 Base path: `/api/profile`
 
-- get profile
-- update profile
-- change password
-- upload picture
-- delete picture
-- delete account
-- deactivate account endpoint
-- assessment status
+* get profile
+* update profile
+* change password
+* upload picture
+* delete picture
+* delete account
+* deactivate account
+* assessment status
 
 ### Lifestyle Assessment
 
 Base path: `/api/lifestyle-assessment`
 
-- create or update assessment
-- get assessment
-- update assessment
-- delete assessment
+* create assessment
+* get assessment
+* update assessment
+* delete assessment
 
 ### AI Feedback
 
 Base path: `/api/ai-feedback`
 
-- get feedback by assessment
-- generate feedback
-- delete feedback
-- service health check
+* get feedback by assessment
+* generate feedback
+* delete feedback
+* service health check
+* test feedback generation endpoint
 
 ### AI Chat
 
 Base path: `/api/ai-chat`
 
-- send message
-- list conversations
-- get conversation history
-- filter conversations by category
-- delete conversation
-- save message
-- regenerate response
+* send message
+* list conversations
+* get conversation history
+* filter conversations by category
+* delete conversation
+* save message
+* regenerate response
 
 ### Daily Check-In
 
 Base path: `/api/daily-checkin`
 
-- get active questions
-- get questions by category
-- submit batch responses
-- submit single response
-- get today's check-in
-- get check-in by date
-- get analytics
-- get alerts
-- get streak
-- delete a response
+* get active questions
+* get questions by category
+* submit batch responses
+* submit single response
+* get today's check-in
+* get check-in by date
+* get analytics
+* get alerts
+* get streak
+* delete a response
 
 ### Goals
 
 Base path: `/api/goals`
 
-- create goal
-- list goals
-- list active goals
-- list overdue goals
-- get goal by id
-- update goal
-- update progress
-- complete goal
-- delete goal
+* create goal
+* list goals
+* list active goals
+* list overdue goals
+* get goal by id
+* update goal
+* update progress
+* complete goal
+* delete goal
 
 ### Wellbeing
 
 Base path: `/api/wellbeing`
 
-- get summary
-- get active alerts
-- resolve alert
-- get trends
-- get daily recommendations
+* get summary
+* get active alerts
+* resolve alert
+* get trends
+* get daily recommendations
+
+### Notifications
+
+Base path: `/api/notifications`
+
+* list notifications
+* get unread count
+* mark notification as read
+* mark all notifications as read
 
 ## Getting Started
 
 ### Prerequisites
 
-- Java 17+
-- MySQL 8+
-- Maven or Maven Wrapper
-- Gemini API key
+* Java 17+
+* Microsoft SQL Server / SQL Server Express
+* Maven or Maven Wrapper
+* Gemini API key
 
 ### 1. Clone the project
 
@@ -235,26 +252,76 @@ The application imports that file through:
 spring.config.import=optional:file:.env.properties
 ```
 
-### 3. Configure database and mail
+### 3. Configure SQL Server database
 
-Update [application.properties](/c:/Users/Jenitha/Desktop/Life-Mentor/src/main/resources/application.properties) with your local:
+Create a SQL Server database:
 
-- MySQL connection settings
-- mail username and password
-- frontend URL if needed
+```sql
+CREATE DATABASE lifementor_db;
+```
+
+Create a SQL Server login and user:
+
+```sql
+USE master;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.sql_logins WHERE name = 'lifementor_user')
+BEGIN
+    CREATE LOGIN lifementor_user
+    WITH PASSWORD = 'YourStrongPassword123';
+END
+GO
+
+USE lifementor_db;
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.database_principals WHERE name = 'lifementor_user')
+BEGIN
+    CREATE USER lifementor_user
+    FOR LOGIN lifementor_user;
+END
+GO
+
+ALTER ROLE db_owner
+ADD MEMBER lifementor_user;
+GO
+```
+
+### 4. Configure application properties
+
+Update `src/main/resources/application.properties` with your local SQL Server, mail, JWT, and Gemini configuration.
+
+Example SQL Server configuration:
+
+```properties
+spring.datasource.url=jdbc:sqlserver://localhost\\SQLEXPRESS;databaseName=lifementor_db;encrypt=true;trustServerCertificate=true
+spring.datasource.username=lifementor_user
+spring.datasource.password=YourStrongPassword123
+spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+spring.flyway.enabled=true
+spring.flyway.locations=classpath:db/migration
+spring.flyway.baseline-on-migrate=true
+spring.flyway.validate-on-migrate=true
+```
 
 Important:
-Do not commit real secrets to source control. Use local secret files or environment variables.
+Do not commit real secrets to source control. Use local secret files, environment variables, or deployment secrets.
 
-### 4. Run the application
+### 5. Run the application
 
 Using Maven Wrapper:
 
 ```bash
-mvnw spring-boot:run
+.\mvnw spring-boot:run
 ```
 
-Or:
+Or using Maven:
 
 ```bash
 mvn spring-boot:run
@@ -266,55 +333,88 @@ The service starts on:
 http://localhost:8080
 ```
 
+## Database Migrations
+
+Flyway is used to manage SQL Server database schema changes.
+
+Migration files are stored in:
+
+```text
+src/main/resources/db/migration
+```
+
+Example migration files:
+
+```text
+V1__create_life_mentor_tables.sql
+V2__seed_daily_checkin_questions.sql
+V3__fix_user_date_of_birth_type.sql
+```
+
+When the application starts, Flyway automatically checks and applies pending migrations.
+
 ## Configuration
 
-Main runtime configuration lives in [application.properties](/c:/Users/Jenitha/Desktop/Life-Mentor/src/main/resources/application.properties).
+Main runtime configuration lives in:
+
+```text
+src/main/resources/application.properties
+```
 
 Notable settings include:
 
-- server port
-- datasource URL, username, password
-- JWT secret and expiry
-- mail server credentials
-- Gemini API URL, key, model, token limit, temperature
-- file upload directories
-- reminder scheduling flags
-- wellbeing thresholds
-- goal reminder settings
+* server port
+* SQL Server datasource URL, username, and password
+* Flyway migration settings
+* JWT secret and expiry
+* mail server credentials
+* Gemini API URL, key, model, token limit, and temperature
+* file upload directories
+* reminder scheduling flags
+* wellbeing thresholds
+* goal reminder settings
 
 ## Background Jobs
 
 Scheduled jobs are enabled and currently include:
 
-- daily check-in reminders at 8:00 PM
-- weekly wellbeing summary placeholder
-- wellbeing alert check placeholder
+* daily check-in reminders at 8:00 PM
+* weekly wellbeing summary placeholder
+* wellbeing alert check placeholder
 
-Reminder implementation lives in [ReminderScheduler.java](/c:/Users/Jenitha/Desktop/Life-Mentor/src/main/java/com/lifementor/entity/ReminderScheduler.java).
+Reminder implementation lives in:
+
+```text
+src/main/java/com/lifementor/scheduler/ReminderScheduler.java
+```
 
 ## Seeded Daily Check-In Questions
 
 When the database has no daily check-in questions, the backend seeds defaults such as:
 
-- Did you have your meals on time today?
-- Did you drink enough water today?
-- How many hours did you sleep last night?
-- How stressed do you feel today?
-- How is your day going overall?
-- Did you do any physical activity today?
-- Did you feel productive today?
-- Did you connect with someone important to you today?
+* Did you have your meals on time today?
+* Did you drink enough water today?
+* How many hours did you sleep last night?
+* How stressed do you feel today?
+* How is your day going overall?
+* Did you do any physical activity today?
+* Did you feel productive today?
+* Did you connect with someone important to you today?
 
 Seeder implementation:
-[DailyCheckinQuestionSeeder.java](/c:/Users/Jenitha/Desktop/Life-Mentor/src/main/java/com/lifementor/config/DailyCheckinQuestionSeeder.java)
+
+```text
+src/main/java/com/lifementor/config/DailyCheckinQuestionSeeder.java
+```
 
 ## Security Notes
 
-- JWT is used for authenticated APIs
-- file upload validation restricts uploads to image content
-- passwords are hashed before persistence
-- account lock logic protects against repeated failed logins
-- password reset tokens expire
+* JWT is used for authenticated APIs
+* file upload validation restricts uploads to image content
+* passwords are hashed before persistence
+* account lock logic protects against repeated failed logins
+* password reset tokens expire
+* sensitive values should be stored in environment variables or local secret files
 
 ## Project Structure
 
@@ -327,21 +427,42 @@ src/main/java/com/lifementor
 ├── exception
 ├── filter
 ├── repository
+├── scheduler
 ├── service
 ├── util
 └── LifeMentorApplication.java
 ```
 
+## Testing
+
+The backend can be tested using:
+
+* Postman API collection
+* frontend integration testing
+* Selenium-based end-to-end tests from the React frontend project
+
+Main test areas:
+
+* authentication
+* profile management
+* lifestyle assessment
+* AI feedback
+* AI chat
+* daily check-ins
+* goals
+* wellbeing
+* notifications
+
 ## Limitations and Next Improvements
 
 Areas that can still be extended:
 
-- in-app notification center instead of email-only reminders
-- push notifications
-- full weekly wellbeing summary delivery
-- richer alert automation
-- admin management for check-in question templates
-- stronger secret management via environment-specific config
+* push notifications
+* full weekly wellbeing summary delivery
+* richer alert automation
+* admin management for check-in question templates
+* stronger secret management via environment-specific config
+* production deployment with cloud database and CI/CD pipeline
 
 ## Disclaimer
 
