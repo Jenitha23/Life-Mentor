@@ -1,18 +1,18 @@
 package com.lifementor.entity;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
-import org.hibernate.annotations.CreationTimestamp;
-import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.annotations.UuidGenerator;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "wellbeing_alerts")
@@ -20,23 +20,23 @@ public class WellbeingAlert {
 
     @Id
     @UuidGenerator
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(name = "id", columnDefinition = "uniqueidentifier", nullable = false, updatable = false)
     private UUID id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(length = 20, nullable = false)
+    @Column(name = "level", length = 20, nullable = false)
     private String level; // INFO, WARNING, CRITICAL
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(name = "message", columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String message;
 
-    @Column(name = "suggested_action", columnDefinition = "TEXT")
+    @Column(name = "suggested_action", columnDefinition = "NVARCHAR(MAX)")
     private String suggestedAction;
 
-    @Column(name = "is_resolved")
+    @Column(name = "is_resolved", nullable = false)
     private boolean resolved = false;
 
     @Column(name = "resolved_at")
@@ -45,64 +45,140 @@ public class WellbeingAlert {
     @Column(name = "alert_category", length = 50)
     private String alertCategory; // MOOD, SLEEP, EXERCISE, etc.
 
-    @Column(name = "alert_data", columnDefinition = "JSON")
-    private String alertData; // Additional data for the alert
+    @Column(name = "alert_data", columnDefinition = "NVARCHAR(MAX)")
+    private String alertData; // Store JSON as string
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Constructors
-    public WellbeingAlert() {}
+    public WellbeingAlert() {
+    }
 
     public WellbeingAlert(User user, String level, String message, String suggestedAction) {
         this.user = user;
         this.level = level;
         this.message = message;
         this.suggestedAction = suggestedAction;
+        this.resolved = false;
     }
 
-    // Getters and Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public WellbeingAlert(User user, String level, String message, String suggestedAction, String alertCategory) {
+        this.user = user;
+        this.level = level;
+        this.message = message;
+        this.suggestedAction = suggestedAction;
+        this.alertCategory = alertCategory;
+        this.resolved = false;
+    }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public UUID getId() {
+        return id;
+    }
 
-    public String getLevel() { return level; }
-    public void setLevel(String level) { this.level = level; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public String getMessage() { return message; }
-    public void setMessage(String message) { this.message = message; }
+    public User getUser() {
+        return user;
+    }
 
-    public String getSuggestedAction() { return suggestedAction; }
-    public void setSuggestedAction(String suggestedAction) { this.suggestedAction = suggestedAction; }
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-    public boolean isResolved() { return resolved; }
-    public void setResolved(boolean resolved) { this.resolved = resolved; }
+    public String getLevel() {
+        return level;
+    }
 
-    public LocalDateTime getResolvedAt() { return resolvedAt; }
-    public void setResolvedAt(LocalDateTime resolvedAt) { this.resolvedAt = resolvedAt; }
+    public void setLevel(String level) {
+        this.level = level;
+    }
 
-    public String getAlertCategory() { return alertCategory; }
-    public void setAlertCategory(String alertCategory) { this.alertCategory = alertCategory; }
+    public String getMessage() {
+        return message;
+    }
 
-    public String getAlertData() { return alertData; }
-    public void setAlertData(String alertData) { this.alertData = alertData; }
+    public void setMessage(String message) {
+        this.message = message;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getSuggestedAction() {
+        return suggestedAction;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setSuggestedAction(String suggestedAction) {
+        this.suggestedAction = suggestedAction;
+    }
 
-    // Business methods
+    public boolean isResolved() {
+        return resolved;
+    }
+
+    public void setResolved(boolean resolved) {
+        this.resolved = resolved;
+
+        if (resolved && this.resolvedAt == null) {
+            this.resolvedAt = LocalDateTime.now();
+        }
+
+        if (!resolved) {
+            this.resolvedAt = null;
+        }
+    }
+
+    public LocalDateTime getResolvedAt() {
+        return resolvedAt;
+    }
+
+    public void setResolvedAt(LocalDateTime resolvedAt) {
+        this.resolvedAt = resolvedAt;
+    }
+
+    public String getAlertCategory() {
+        return alertCategory;
+    }
+
+    public void setAlertCategory(String alertCategory) {
+        this.alertCategory = alertCategory;
+    }
+
+    public String getAlertData() {
+        return alertData;
+    }
+
+    public void setAlertData(String alertData) {
+        this.alertData = alertData;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public void resolve() {
         this.resolved = true;
         this.resolvedAt = LocalDateTime.now();
+    }
+
+    public void reopen() {
+        this.resolved = false;
+        this.resolvedAt = null;
     }
 }

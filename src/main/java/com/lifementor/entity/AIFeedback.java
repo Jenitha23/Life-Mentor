@@ -1,10 +1,16 @@
 package com.lifementor.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -15,87 +21,140 @@ public class AIFeedback {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @JdbcTypeCode(SqlTypes.BINARY)
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(name = "id", columnDefinition = "uniqueidentifier", nullable = false, updatable = false)
     private UUID id;
 
-    @OneToOne
-    @JoinColumn(name = "assessment_id", nullable = false, unique = true, columnDefinition = "BINARY(16)")
+    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "assessment_id", nullable = false, unique = true)
     private LifestyleAssessment assessment;
 
-    @Column(name = "summary", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "summary", columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String summary;
 
-    @Column(name = "positive_highlights", columnDefinition = "TEXT")
+    @Column(name = "positive_highlights", columnDefinition = "NVARCHAR(MAX)")
     private String positiveHighlights;
 
-    @Column(name = "suggestions", columnDefinition = "TEXT", nullable = false)
+    @Column(name = "suggestions", columnDefinition = "NVARCHAR(MAX)", nullable = false)
     private String suggestions;
 
-    @Column(name = "motivational_message", columnDefinition = "TEXT")
+    @Column(name = "motivational_message", columnDefinition = "NVARCHAR(MAX)")
     private String motivationalMessage;
 
-    @Column(name = "ai_model_version")
+    @Column(name = "ai_model_version", length = 255)
     private String aiModelVersion;
 
     @Column(name = "disclaimer_shown", nullable = false)
     private boolean disclaimerShown = true;
 
-    @Column(name = "risk_level")
+    @Column(name = "risk_level", length = 255)
     private String riskLevel;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Constructors
-    public AIFeedback() {}
+    public AIFeedback() {
+    }
 
     public AIFeedback(LifestyleAssessment assessment, String summary, String suggestions) {
         this.assessment = assessment;
         this.summary = summary;
         this.suggestions = suggestions;
+        this.disclaimerShown = true;
     }
 
-    // Getters and Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public LifestyleAssessment getAssessment() { return assessment; }
-    public void setAssessment(LifestyleAssessment assessment) { this.assessment = assessment; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public String getSummary() { return summary; }
-    public void setSummary(String summary) { this.summary = summary; }
+    public LifestyleAssessment getAssessment() {
+        return assessment;
+    }
 
-    public String getPositiveHighlights() { return positiveHighlights; }
-    public void setPositiveHighlights(String positiveHighlights) { this.positiveHighlights = positiveHighlights; }
+    public void setAssessment(LifestyleAssessment assessment) {
+        this.assessment = assessment;
+    }
 
-    public String getSuggestions() { return suggestions; }
-    public void setSuggestions(String suggestions) { this.suggestions = suggestions; }
+    public String getSummary() {
+        return summary;
+    }
 
-    public String getMotivationalMessage() { return motivationalMessage; }
-    public void setMotivationalMessage(String motivationalMessage) { this.motivationalMessage = motivationalMessage; }
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
 
-    public String getAiModelVersion() { return aiModelVersion; }
-    public void setAiModelVersion(String aiModelVersion) { this.aiModelVersion = aiModelVersion; }
+    public String getPositiveHighlights() {
+        return positiveHighlights;
+    }
 
-    public boolean isDisclaimerShown() { return disclaimerShown; }
-    public void setDisclaimerShown(boolean disclaimerShown) { this.disclaimerShown = disclaimerShown; }
+    public void setPositiveHighlights(String positiveHighlights) {
+        this.positiveHighlights = positiveHighlights;
+    }
 
-    public String getRiskLevel() { return riskLevel; }
-    public void setRiskLevel(String riskLevel) { this.riskLevel = riskLevel; }
+    public String getSuggestions() {
+        return suggestions;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public void setSuggestions(String suggestions) {
+        this.suggestions = suggestions;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public String getMotivationalMessage() {
+        return motivationalMessage;
+    }
 
-    // Builder
+    public void setMotivationalMessage(String motivationalMessage) {
+        this.motivationalMessage = motivationalMessage;
+    }
+
+    public String getAiModelVersion() {
+        return aiModelVersion;
+    }
+
+    public void setAiModelVersion(String aiModelVersion) {
+        this.aiModelVersion = aiModelVersion;
+    }
+
+    public boolean isDisclaimerShown() {
+        return disclaimerShown;
+    }
+
+    public void setDisclaimerShown(boolean disclaimerShown) {
+        this.disclaimerShown = disclaimerShown;
+    }
+
+    public String getRiskLevel() {
+        return riskLevel;
+    }
+
+    public void setRiskLevel(String riskLevel) {
+        this.riskLevel = riskLevel;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public static Builder builder() {
         return new Builder();
     }

@@ -16,71 +16,120 @@ public class AIChatConversation {
 
     @Id
     @UuidGenerator
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(name = "id", columnDefinition = "uniqueidentifier", nullable = false, updatable = false)
     private UUID id;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(length = 255)
+    @Column(name = "title", length = 255)
     private String title;
 
-    @Column(length = 50)
+    @Column(name = "category", length = 50)
     private String category;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "conversation",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     @OrderBy("createdAt ASC")
     private List<AIChatMessage> messages = new ArrayList<>();
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Constructors
-    public AIChatConversation() {}
+    public AIChatConversation() {
+    }
 
     public AIChatConversation(User user, String title, String category) {
         this.user = user;
         this.title = title;
         this.category = category;
+        this.isActive = true;
     }
 
-    // Getters and Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public UUID getId() {
+        return id;
+    }
 
-    public User getUser() { return user; }
-    public void setUser(User user) { this.user = user; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+    public User getUser() {
+        return user;
+    }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-    public boolean isActive() { return isActive; }
-    public void setActive(boolean active) { isActive = active; }
+    public String getTitle() {
+        return title;
+    }
 
-    public List<AIChatMessage> getMessages() { return messages; }
-    public void setMessages(List<AIChatMessage> messages) { this.messages = messages; }
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getCategory() {
+        return category;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setCategory(String category) {
+        this.category = category;
+    }
 
-    // Helper method
+    public boolean isActive() {
+        return isActive;
+    }
+
+    public void setActive(boolean active) {
+        isActive = active;
+    }
+
+    public List<AIChatMessage> getMessages() {
+        return messages;
+    }
+
+    public void setMessages(List<AIChatMessage> messages) {
+        this.messages = messages;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     public void addMessage(AIChatMessage message) {
         messages.add(message);
         message.setConversation(this);
+    }
+
+    public void removeMessage(AIChatMessage message) {
+        messages.remove(message);
+        message.setConversation(null);
     }
 }

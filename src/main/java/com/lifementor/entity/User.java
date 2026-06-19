@@ -1,12 +1,21 @@
 package com.lifementor.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.annotations.UuidGenerator;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,28 +23,31 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "users", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "email")
-})
+@Table(
+        name = "users",
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uq_users_email", columnNames = "email")
+        }
+)
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(columnDefinition = "BINARY(16)")
+    @Column(name = "id", columnDefinition = "uniqueidentifier", nullable = false, updatable = false)
     private UUID id;
 
     @NotBlank(message = "Name is required")
     @Size(min = 2, max = 100, message = "Name must be between 2 and 100 characters")
-    @Column(nullable = false, length = 100)
+    @Column(name = "name", nullable = false, length = 100)
     private String name;
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")
-    @Column(nullable = false, unique = true, length = 255)
+    @Column(name = "email", nullable = false, unique = true, length = 255)
     private String email;
 
     @NotBlank(message = "Password is required")
-    @Column(nullable = false, length = 255)
+    @Column(name = "password", nullable = false, length = 255)
     private String password;
 
     @Column(name = "reset_token", length = 255)
@@ -62,7 +74,7 @@ public class User {
     @Column(name = "bio", length = 500)
     private String bio;
 
-    @Column(name = "date_of_birth")
+    @Column(name = "date_of_birth", length = 255)
     private String dateOfBirth;
 
     @Column(name = "gender", length = 20)
@@ -72,7 +84,7 @@ public class User {
     private String profilePictureUrl;
 
     @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @UpdateTimestamp
@@ -82,105 +94,265 @@ public class User {
     @Column(name = "last_login")
     private LocalDateTime lastLogin;
 
-    // Relationships
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     private LifestyleAssessment lifestyleAssessment;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     private List<AIChatConversation> chatConversations = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<DailyCheckinResponseEntity> checkinResponses = new ArrayList<>(); // FIXED: Changed to DailyCheckinResponseEntity
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<DailyCheckinResponseEntity> checkinResponses = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     private List<UserGoal> goals = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     private List<WellbeingAlert> wellbeingAlerts = new ArrayList<>();
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(
+            mappedBy = "user",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
     private List<Notification> notifications = new ArrayList<>();
 
-    // Constructors
-    public User() {}
+    public User() {
+    }
 
-    // Getters and Setters
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public User(String name, String email, String password) {
+        this.name = name;
+        this.email = email;
+        this.password = password;
+        this.emailVerified = false;
+        this.failedLoginAttempts = 0;
+        this.accountLocked = false;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public UUID getId() {
+        return id;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public String getName() {
+        return name;
+    }
 
-    public String getResetToken() { return resetToken; }
-    public void setResetToken(String resetToken) { this.resetToken = resetToken; }
+    public void setName(String name) {
+        this.name = name;
+    }    
 
-    public LocalDateTime getResetTokenExpiry() { return resetTokenExpiry; }
-    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) { this.resetTokenExpiry = resetTokenExpiry; }
+    public String getEmail() {
+        return email;
+    }
 
-    public boolean isEmailVerified() { return emailVerified; }
-    public void setEmailVerified(boolean emailVerified) { this.emailVerified = emailVerified; }
+    public void setEmail(String email) {
+        this.email = email;
+    }    
 
-    public int getFailedLoginAttempts() { return failedLoginAttempts; }
-    public void setFailedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; }
+    public String getPassword() {
+        return password;
+    }
 
-    public boolean isAccountLocked() { return accountLocked; }
-    public void setAccountLocked(boolean accountLocked) { this.accountLocked = accountLocked; }
+    public void setPassword(String password) {
+        this.password = password;
+    }    
 
-    public LocalDateTime getLockUntil() { return lockUntil; }
-    public void setLockUntil(LocalDateTime lockUntil) { this.lockUntil = lockUntil; }
+    public String getResetToken() {
+        return resetToken;
+    }
 
-    public String getPhoneNumber() { return phoneNumber; }
-    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    public void setResetToken(String resetToken) {
+        this.resetToken = resetToken;
+    }    
 
-    public String getBio() { return bio; }
-    public void setBio(String bio) { this.bio = bio; }
+    public LocalDateTime getResetTokenExpiry() {
+        return resetTokenExpiry;
+    }
 
-    public String getDateOfBirth() { return dateOfBirth; }
-    public void setDateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; }
+    public void setResetTokenExpiry(LocalDateTime resetTokenExpiry) {
+        this.resetTokenExpiry = resetTokenExpiry;
+    }    
 
-    public String getGender() { return gender; }
-    public void setGender(String gender) { this.gender = gender; }
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
 
-    public String getProfilePictureUrl() { return profilePictureUrl; }
-    public void setProfilePictureUrl(String profilePictureUrl) { this.profilePictureUrl = profilePictureUrl; }
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
+    }    
 
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public int getFailedLoginAttempts() {
+        return failedLoginAttempts;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setFailedLoginAttempts(int failedLoginAttempts) {
+        this.failedLoginAttempts = failedLoginAttempts;
+    }    
 
-    public LocalDateTime getLastLogin() { return lastLogin; }
-    public void setLastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; }
+    public boolean isAccountLocked() {
+        return accountLocked;
+    }
 
-    public LifestyleAssessment getLifestyleAssessment() { return lifestyleAssessment; }
-    public void setLifestyleAssessment(LifestyleAssessment lifestyleAssessment) { this.lifestyleAssessment = lifestyleAssessment; }
+    public void setAccountLocked(boolean accountLocked) {
+        this.accountLocked = accountLocked;
+    }    
 
-    public List<AIChatConversation> getChatConversations() { return chatConversations; }
-    public void setChatConversations(List<AIChatConversation> chatConversations) { this.chatConversations = chatConversations; }
+    public LocalDateTime getLockUntil() {
+        return lockUntil;
+    }
 
-    // FIXED: Changed return type to List<DailyCheckinResponseEntity>
-    public List<DailyCheckinResponseEntity> getCheckinResponses() { return checkinResponses; }
-    public void setCheckinResponses(List<DailyCheckinResponseEntity> checkinResponses) { this.checkinResponses = checkinResponses; }
+    public void setLockUntil(LocalDateTime lockUntil) {
+        this.lockUntil = lockUntil;
+    }    
 
-    public List<UserGoal> getGoals() { return goals; }
-    public void setGoals(List<UserGoal> goals) { this.goals = goals; }
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
 
-    public List<WellbeingAlert> getWellbeingAlerts() { return wellbeingAlerts; }
-    public void setWellbeingAlerts(List<WellbeingAlert> wellbeingAlerts) { this.wellbeingAlerts = wellbeingAlerts; }
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }    
 
-    public List<Notification> getNotifications() { return notifications; }
-    public void setNotifications(List<Notification> notifications) { this.notifications = notifications; }
+    public String getBio() {
+        return bio;
+    }
 
-    // Business logic methods
+    public void setBio(String bio) {
+        this.bio = bio;
+    }    
+
+    public String getDateOfBirth() {
+        return dateOfBirth;
+    }
+
+    public void setDateOfBirth(String dateOfBirth) {
+        this.dateOfBirth = dateOfBirth;
+    }    
+
+    public String getGender() {
+        return gender;
+    }
+
+    public void setGender(String gender) {
+        this.gender = gender;
+    }    
+
+    public String getProfilePictureUrl() {
+        return profilePictureUrl;
+    }
+
+    public void setProfilePictureUrl(String profilePictureUrl) {
+        this.profilePictureUrl = profilePictureUrl;
+    }    
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }    
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }    
+
+    public LocalDateTime getLastLogin() {
+        return lastLogin;
+    }
+
+    public void setLastLogin(LocalDateTime lastLogin) {
+        this.lastLogin = lastLogin;
+    }    
+
+    public LifestyleAssessment getLifestyleAssessment() {
+        return lifestyleAssessment;
+    }
+
+    public void setLifestyleAssessment(LifestyleAssessment lifestyleAssessment) {
+        this.lifestyleAssessment = lifestyleAssessment;
+
+        if (lifestyleAssessment != null) {
+            lifestyleAssessment.setUser(this);
+        }
+    }
+
+    public List<AIChatConversation> getChatConversations() {
+        return chatConversations;
+    }
+
+    public void setChatConversations(List<AIChatConversation> chatConversations) {
+        this.chatConversations = chatConversations;
+    }
+
+    public List<DailyCheckinResponseEntity> getCheckinResponses() {
+        return checkinResponses;
+    }
+
+    public void setCheckinResponses(List<DailyCheckinResponseEntity> checkinResponses) {
+        this.checkinResponses = checkinResponses;
+    }
+
+    public List<UserGoal> getGoals() {
+        return goals;
+    }
+
+    public void setGoals(List<UserGoal> goals) {
+        this.goals = goals;
+    }
+
+    public List<WellbeingAlert> getWellbeingAlerts() {
+        return wellbeingAlerts;
+    }
+
+    public void setWellbeingAlerts(List<WellbeingAlert> wellbeingAlerts) {
+        this.wellbeingAlerts = wellbeingAlerts;
+    }
+
+    public List<Notification> getNotifications() {
+        return notifications;
+    }
+
+    public void setNotifications(List<Notification> notifications) {
+        this.notifications = notifications;
+    }
+
     public void incrementFailedLoginAttempts() {
         this.failedLoginAttempts++;
+
         if (this.failedLoginAttempts >= 5) {
             this.accountLocked = true;
             this.lockUntil = LocalDateTime.now().plusMinutes(30);
@@ -197,13 +369,14 @@ public class User {
         if (this.lockUntil != null && LocalDateTime.now().isBefore(this.lockUntil)) {
             return true;
         }
+
         if (this.accountLocked && (this.lockUntil == null || LocalDateTime.now().isAfter(this.lockUntil))) {
             resetFailedLoginAttempts();
         }
+
         return this.accountLocked;
     }
 
-    // Builder
     public static Builder builder() {
         return new Builder();
     }
@@ -228,27 +401,99 @@ public class User {
         private LocalDateTime updatedAt;
         private LocalDateTime lastLogin;
 
-        public Builder id(UUID id) { this.id = id; return this; }
-        public Builder name(String name) { this.name = name; return this; }
-        public Builder email(String email) { this.email = email; return this; }
-        public Builder password(String password) { this.password = password; return this; }
-        public Builder resetToken(String resetToken) { this.resetToken = resetToken; return this; }
-        public Builder resetTokenExpiry(LocalDateTime resetTokenExpiry) { this.resetTokenExpiry = resetTokenExpiry; return this; }
-        public Builder emailVerified(boolean emailVerified) { this.emailVerified = emailVerified; return this; }
-        public Builder failedLoginAttempts(int failedLoginAttempts) { this.failedLoginAttempts = failedLoginAttempts; return this; }
-        public Builder accountLocked(boolean accountLocked) { this.accountLocked = accountLocked; return this; }
-        public Builder lockUntil(LocalDateTime lockUntil) { this.lockUntil = lockUntil; return this; }
-        public Builder phoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; return this; }
-        public Builder bio(String bio) { this.bio = bio; return this; }
-        public Builder dateOfBirth(String dateOfBirth) { this.dateOfBirth = dateOfBirth; return this; }
-        public Builder gender(String gender) { this.gender = gender; return this; }
-        public Builder profilePictureUrl(String profilePictureUrl) { this.profilePictureUrl = profilePictureUrl; return this; }
-        public Builder createdAt(LocalDateTime createdAt) { this.createdAt = createdAt; return this; }
-        public Builder updatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; return this; }
-        public Builder lastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; return this; }
+        public Builder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder email(String email) {
+            this.email = email;
+            return this;
+        }
+
+        public Builder password(String password) {
+            this.password = password;
+            return this;
+        }
+
+        public Builder resetToken(String resetToken) {
+            this.resetToken = resetToken;
+            return this;
+        }
+
+        public Builder resetTokenExpiry(LocalDateTime resetTokenExpiry) {
+            this.resetTokenExpiry = resetTokenExpiry;
+            return this;
+        }
+
+        public Builder emailVerified(boolean emailVerified) {
+            this.emailVerified = emailVerified;
+            return this;
+        }
+
+        public Builder failedLoginAttempts(int failedLoginAttempts) {
+            this.failedLoginAttempts = failedLoginAttempts;
+            return this;
+        }
+
+        public Builder accountLocked(boolean accountLocked) {
+            this.accountLocked = accountLocked;
+            return this;
+        }
+
+        public Builder lockUntil(LocalDateTime lockUntil) {
+            this.lockUntil = lockUntil;
+            return this;
+        }
+
+        public Builder phoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
+            return this;
+        }
+
+        public Builder bio(String bio) {
+            this.bio = bio;
+            return this;
+        }
+
+        public Builder dateOfBirth(String dateOfBirth) {
+            this.dateOfBirth = dateOfBirth;
+            return this;
+        }
+
+        public Builder gender(String gender) {
+            this.gender = gender;
+            return this;
+        }
+
+        public Builder profilePictureUrl(String profilePictureUrl) {
+            this.profilePictureUrl = profilePictureUrl;
+            return this;
+        }
+
+        public Builder createdAt(LocalDateTime createdAt) {
+            this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder updatedAt(LocalDateTime updatedAt) {
+            this.updatedAt = updatedAt;
+            return this;
+        }
+
+        public Builder lastLogin(LocalDateTime lastLogin) {
+            this.lastLogin = lastLogin;
+            return this;
+        }
 
         public User build() {
             User user = new User();
+
             user.id = this.id;
             user.name = this.name;
             user.email = this.email;
@@ -267,6 +512,7 @@ public class User {
             user.createdAt = this.createdAt;
             user.updatedAt = this.updatedAt;
             user.lastLogin = this.lastLogin;
+
             return user;
         }
     }
